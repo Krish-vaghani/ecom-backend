@@ -1,0 +1,347 @@
+{
+  "info": {
+    "name": "E-commerce API",
+    "description": "Public (v1) + Admin endpoints. Run **Login** first; token is saved to collection variable and used for all Admin requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" },
+    { "key": "product_id", "value": "" },
+    { "key": "section_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/health",
+            "description": "Check if API is running."
+          }
+        }
+      ]
+    },
+    {
+      "name": "v1 - Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/auth/register",
+            "description": "Register a new user. Required: email, password. Optional: name."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.token) {",
+                  "    pm.collectionVariables.set('token', json.data.token);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/auth/login",
+            "description": "Login. Saves token to collection variable; use for Admin requests (Bearer token)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "v1 - Product",
+      "item": [
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/product/list?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "product", "list"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "category", "value": "purse", "disabled": true, "description": "jwellery | purse" },
+                { "key": "tag", "value": "bestseller", "disabled": true, "description": "bestseller | hot | trending | sale" }
+              ]
+            },
+            "description": "List active products. Optional: category, tag, page, limit."
+          }
+        }
+      ]
+    },
+    {
+      "name": "v1 - Landing",
+      "item": [
+        {
+          "name": "Get All Landing Page Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/landing",
+            "description": "Returns all active landing sections in one response, keyed by sectionKey (hero, best_collections, find_perfect_purse, elevate_look, fresh_styles, etc.)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Upload",
+      "item": [
+        {
+          "name": "Upload Image",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "image", "type": "file", "src": [], "description": "Image file (field name must be 'image')" }
+              ]
+            },
+            "url": "{{base_url}}/api/admin/upload/image",
+            "description": "Upload image (e.g. S3). Use form-data field name 'image'. Use returned URL in product/landing section bodies."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Product",
+      "item": [
+        {
+          "name": "Add Product",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tiny Micro Bag\",\n  \"slug\": \"tiny-micro-bag\",\n  \"description\": \"Premium micro bag\",\n  \"category\": \"purse\",\n  \"price\": 125,\n  \"salePrice\": 99,\n  \"image\": \"https://your-bucket.s3.region.amazonaws.com/uploads/product.jpg\",\n  \"tags\": [\"bestseller\", \"sale\"],\n  \"colorVariants\": [\n    { \"colorCode\": \"#000000\", \"images\": [\"https://.../black1.jpg\"] },\n    { \"colorCode\": \"#FFC0CB\", \"images\": [\"https://.../pink1.jpg\"] }\n  ],\n  \"numberOfReviews\": 83\n}"
+            },
+            "url": "{{base_url}}/api/admin/product/add",
+            "description": "Create product. Required: name, slug, price, category (jwellery|purse). Optional: description, salePrice, image, tags, colorVariants, numberOfReviews."
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tiny Micro Bag Updated\",\n  \"category\": \"purse\",\n  \"price\": 120,\n  \"tags\": [\"bestseller\", \"hot\"]\n}"
+            },
+            "url": "{{base_url}}/api/admin/product/update/{{product_id}}",
+            "description": "Update product. Set product_id from List Products response."
+          }
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/api/admin/product/delete/{{product_id}}",
+            "description": "Delete product."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Landing",
+      "item": [
+        {
+          "name": "Get All Landing Page Data",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/admin/landing",
+            "description": "Returns all landing sections (same shape as v1/landing). Use section _id for Update Section by ID."
+          }
+        },
+        {
+          "name": "Update Section by ID",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order\": 1,\n  \"is_active\": true,\n  \"images\": [\"https://...\"],\n  \"price\": 99,\n  \"originalPrice\": 120\n}"
+            },
+            "url": "{{base_url}}/api/admin/landing/section/update/{{section_id}}",
+            "description": "Generic update by section _id. Set section_id from Get All Landing Page Data."
+          }
+        },
+        {
+          "name": "Hero - Create",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"images\": [\"https://your-bucket.s3.../hero.jpg\"],\n  \"price\": null,\n  \"rating\": null,\n  \"numberOfReviews\": 0\n}"
+            },
+            "url": "{{base_url}}/api/admin/landing/hero",
+            "description": "Create hero section (single record). Optional: images, price, rating, numberOfReviews."
+          }
+        },
+        {
+          "name": "Hero - Update",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"images\": [\"https://.../hero-updated.jpg\"],\n  \"price\": 99,\n  \"rating\": 4.5,\n  \"numberOfReviews\": 42\n}"
+            },
+            "url": "{{base_url}}/api/admin/landing/hero",
+            "description": "Update hero section."
+          }
+        },
+        {
+          "name": "Best Collections - Create",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order\": 1,\n  \"is_active\": true,\n  \"images\": [\"https://.../img1.jpg\"],\n  \"price\": 99,\n  \"originalPrice\": 120,\n  \"rating\": 4.5,\n  \"numberOfReviews\": 20,\n  \"tags\": [\"bestseller\", \"sale\"],\n  \"colors\": [\n    { \"colorCode\": \"#000\", \"images\": \"https://.../black.jpg\" },\n    { \"colorCode\": \"#fff\", \"images\": \"https://.../white.jpg\" }\n  ]\n}"
+            },
+            "url": "{{base_url}}/api/admin/landing/best-collections",
+            "description": "Create best_collections section. Optional: order, is_active, images, price, originalPrice, rating, numberOfReviews, tags (bestseller|hot|trending|sale), colors[{colorCode, images}]."
+          }
+        },
+        {
+          "name": "Best Collections - Update",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order\": 2,\n  \"images\": [\"https://.../updated.jpg\"],\n  \"price\": 89,\n  \"tags\": [\"hot\", \"trending\"]\n}"
+            },
+            "url": "{{base_url}}/api/admin/landing/best-collections",
+            "description": "Update best_collections section."
+          }
+        },
+        {
+          "name": "Find Perfect Purse - Create",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image\": \"https://your-bucket.s3.../find-perfect-purse.jpg\",\n  \"order\": 2\n}"
+            },
+            "url": "{{base_url}}/api/admin/landing/find-perfect-purse",
+            "description": "Create find_perfect_purse section. Optional: image (single), order."
+          }
+        },
+        {
+          "name": "Find Perfect Purse - Update",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image\": \"https://.../updated.jpg\",\n  \"order\": 3\n}"
+            },
+            "url": "{{base_url}}/api/admin/landing/find-perfect-purse",
+            "description": "Update find_perfect_purse section."
+          }
+        },
+        {
+          "name": "Elevate Look - Create",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image\": \"https://your-bucket.s3.../elevate-look.jpg\",\n  \"order\": 3\n}"
+            },
+            "url": "{{base_url}}/api/admin/landing/elevate-look",
+            "description": "Create elevate_look section. Optional: image, order."
+          }
+        },
+        {
+          "name": "Elevate Look - Update",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image\": \"https://.../updated.jpg\",\n  \"order\": 4\n}"
+            },
+            "url": "{{base_url}}/api/admin/landing/elevate-look",
+            "description": "Update elevate_look section."
+          }
+        },
+        {
+          "name": "Fresh Styles - Create",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order\": 4,\n  \"is_active\": true,\n  \"images\": [\"https://.../img1.jpg\"],\n  \"price\": 79,\n  \"originalPrice\": 99,\n  \"rating\": 4.2,\n  \"numberOfReviews\": 15,\n  \"tags\": [\"trending\"],\n  \"colors\": [\n    { \"colorCode\": \"#000\", \"images\": \"https://.../black.jpg\" }\n  ]\n}"
+            },
+            "url": "{{base_url}}/api/admin/landing/fresh-styles",
+            "description": "Create fresh_styles section. Same fields as best_collections."
+          }
+        },
+        {
+          "name": "Fresh Styles - Update",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order\": 5,\n  \"price\": 69,\n  \"tags\": [\"sale\"]\n}"
+            },
+            "url": "{{base_url}}/api/admin/landing/fresh-styles",
+            "description": "Update fresh_styles section."
+          }
+        }
+      ]
+    }
+  ]
+}
