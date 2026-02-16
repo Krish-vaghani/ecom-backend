@@ -29,14 +29,14 @@ export const RegisterOrRequestOtp = async (req, res) => {
       user = existingByPhone.data;
     } else {
       // New user: validate full registration payload (name + phone only)
-      const { error: regError } = AuthRegisterValidator.validate({ name, phone });
-      if (regError) {
-        return res.status(400).json({ message: regError.details[0].message });
-      }
+      // const { error: regError } = AuthRegisterValidator.validate({ name, phone });
+      // if (regError) {
+      //   return res.status(400).json({ message: regError.details[0].message });
+      // }
 
-      if (!name || !String(name).trim()) {
-        return res.status(400).json({ message: "Name is required for registration." });
-      }
+      // if (!name || !String(name).trim()) {
+      //   return res.status(400).json({ message: "Name is required for registration." });
+      // }
 
       // Email is no longer part of public registration/login flow
       const created = await SingleRecordOperation("i", User, { name, phone });
