@@ -65,7 +65,13 @@ export const RegisterOrRequestOtp = async (req, res) => {
       },
     });
   } catch (err) {
-    return res.status(500).json({ message: "Server error.", error: err.message });
+    const status = err.response?.status ?? 500;
+    const message = err.response?.message ?? err.message;
+    const userMessage =
+      status === 409 && message && message.includes("email")
+        ? "This phone number is already registered. Request OTP to sign in."
+        : status === 500 ? "Server error." : message;
+    return res.status(status).json({ message: userMessage, error: err.message });
   }
 };
 
