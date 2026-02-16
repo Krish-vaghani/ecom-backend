@@ -4,7 +4,7 @@ const UserSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     // Email is now optional – login will be done via phone + OTP
-    email: { type: String, required: false, unique: true },
+    email: { type: String, required: false, unique: false, default: null, allowNull: true},
     // Primary login identifier
     phone: { type: String, required: true, unique: true },
     // One-time password fields for phone login
