@@ -15,6 +15,9 @@ export const AuthLoginRequestValidator = Joi.object({
   phone: Joi.string().min(5).max(20).required().messages({
     "any.required": "Please enter a phone number",
   }),
+  name: Joi.string().min(1).max(100).required().messages({
+    "any.required": "Please enter your name",
+  }),
 });
 
 // Step 2 login: verify OTP
