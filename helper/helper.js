@@ -7,27 +7,11 @@ dotenv.config()
 
 const saltRound = 10
 
-// CORS configuration (works with localtunnel and localhost)
+// CORS configuration – allow all origins, methods, and headers
 export const corsOptions = {
-  origin: (origin, callback) => {
-    const allowed =
-      !origin ||
-      origin === 'null' ||
-      /^https?:\/\/localhost(:\d+)?$/i.test(origin) ||
-      /\.loca\.lt$/i.test(origin) ||
-      /\.ngrok/i.test(origin);
-    callback(null, allowed);
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: [
-    'Origin',
-    'Content-Type',
-    'Accept',
-    'Authorization',
-    'X-Requested-With',
-    'bypass-tunnel-reminder',
-    'Access-Control-Allow-Headers'
-  ],
+  origin: true, // allow any origin (reflects request origin)
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: '*',
   credentials: true,
   optionsSuccessStatus: 200
 }
