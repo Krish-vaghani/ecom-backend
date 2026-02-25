@@ -25,7 +25,7 @@ export const AddTestimonial = async (req, res) => {
 
 export const ListTestimonial = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 50 } = req.query;
     const filter = {};
 
     const skip = (Number(page) - 1) * Number(limit);
