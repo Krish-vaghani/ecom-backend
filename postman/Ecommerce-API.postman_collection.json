@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "E-commerce API",
-    "description": "Public (v1) + Admin endpoints. Auth: run **Register or Request OTP** first (saves OTP to {{otp}} in dev). Then run **Verify OTP (Login)** with {{phone}} and {{otp}}; token is saved and used for all Admin requests.",
+    "description": "Complete API collection (folder-wise).\n\n**Auth flow:** Run **Register or Request OTP** → then **Verify OTP (Login)**. Token is saved to `{{token}}` for Admin requests.\n\n**Variables:** base_url, token, phone, otp, product_id, section_id, testimonial_id, address_id, order_id",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -10,7 +10,10 @@
     { "key": "phone", "value": "+1234567890" },
     { "key": "otp", "value": "" },
     { "key": "product_id", "value": "" },
-    { "key": "section_id", "value": "" }
+    { "key": "section_id", "value": "" },
+    { "key": "testimonial_id", "value": "" },
+    { "key": "address_id", "value": "" },
+    { "key": "order_id", "value": "" }
   ],
   "item": [
     {
@@ -56,7 +59,7 @@
               "raw": "{\n  \"name\": \"John Doe\",\n  \"phone\": \"{{phone}}\"\n}"
             },
             "url": "{{base_url}}/api/v1/auth/register-or-login",
-            "description": "If user exists: sends OTP to phone. If new: requires name + phone, registers and sends OTP. In dev, response includes otp (saved to {{otp}})."
+            "description": "If user exists: sends OTP. If new: name + phone, then OTP. In dev, response may include otp (saved to {{otp}})."
           }
         },
         {
@@ -85,7 +88,7 @@
               "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"otp\": \"{{otp}}\"\n}"
             },
             "url": "{{base_url}}/api/v1/auth/login",
-            "description": "Verify OTP and get JWT. Required: phone, otp (6 digits). Optional: cartItems, wishlist. Saves token to collection variable for Admin requests."
+            "description": "Verify OTP and get JWT. Saves token to {{token}} for Admin requests."
           }
         }
       ]
@@ -95,6 +98,22 @@
       "item": [
         {
           "name": "List Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.length > 0) {",
+                  "    pm.collectionVariables.set('product_id', json.data[0]._id);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -109,7 +128,16 @@
                 { "key": "tag", "value": "bestseller", "disabled": true, "description": "bestseller | hot | trending | sale" }
               ]
             },
-            "description": "List active products. Optional: category, tag, page, limit."
+            "description": "List active products. Optional: category, tag, page, limit. Saves first product _id to {{product_id}}."
+          }
+        },
+        {
+          "name": "Increment Product View",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/api/v1/product/{{product_id}}/view",
+            "description": "Increment view count for a product. Call when user opens product detail. Uses {{product_id}}."
           }
         }
       ]
@@ -123,7 +151,209 @@
             "method": "GET",
             "header": [],
             "url": "{{base_url}}/api/v1/landing",
-            "description": "Returns all active landing sections in one response, keyed by sectionKey (hero, best_collections, find_perfect_purse, elevate_look, fresh_styles, etc.)."
+            "description": "Returns all active landing sections keyed by sectionKey (hero, best_collections, find_perfect_purse, etc.)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "v1 - Testimonials",
+      "item": [
+        {
+          "name": "List Testimonials (active only)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/testimonial/list?limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "testimonial", "list"],
+              "query": [{ "key": "limit", "value": "10" }]
+            },
+            "description": "Returns only active testimonials for public display."
+          }
+        }
+      ]
+    },
+    {
+      "name": "v1 - Addresses",
+      "item": [
+        {
+          "name": "Add Address",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data._id) {",
+                  "    pm.collectionVariables.set('address_id', json.data._id);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_type\": \"Home\",\n  \"full_name\": \"Priya Sharma\",\n  \"mobile_number\": \"9876543210\",\n  \"email_address\": \"priya@example.com\",\n  \"address_line_1\": \"House No. 12, Street Name, Area\",\n  \"address_line_2\": \"Apartment 5, Floor 2\",\n  \"pincode\": \"400001\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"landmark\": \"Near metro station\",\n  \"is_default\": true\n}"
+            },
+            "url": "{{base_url}}/api/v1/address/add",
+            "description": "Add delivery address. Requires login (Bearer token). address_type: Home | Office | Other."
+          }
+        },
+        {
+          "name": "List Addresses",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.length > 0) {",
+                  "    pm.collectionVariables.set('address_id', json.data[0]._id);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/address/list?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "address", "list"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "List current user's addresses. Requires login."
+          }
+        },
+        {
+          "name": "Get Address",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/address/{{address_id}}",
+            "description": "Get one address by id. Requires login."
+          }
+        },
+        {
+          "name": "Update Address",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Priya Sharma Updated\",\n  \"address_line_1\": \"New House No., New Street\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"pincode\": \"400002\",\n  \"is_default\": true\n}"
+            },
+            "url": "{{base_url}}/api/v1/address/update/{{address_id}}",
+            "description": "Update address. Set address_id from List or Add response."
+          }
+        },
+        {
+          "name": "Delete Address",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/api/v1/address/delete/{{address_id}}",
+            "description": "Delete address. Requires login."
+          }
+        }
+      ]
+    },
+    {
+      "name": "v1 - Orders",
+      "item": [
+        {
+          "name": "Place Order (COD)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data._id) {",
+                  "    pm.collectionVariables.set('order_id', json.data._id);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"addressId\": \"{{address_id}}\",\n  \"items\": [\n    { \"productId\": \"{{product_id}}\", \"quantity\": 2 }\n  ]\n}"
+            },
+            "url": "{{base_url}}/api/v1/order/place",
+            "description": "Place order with Cash on Delivery. Requires login. Use address_id and product_id from List Addresses / List Products."
+          }
+        },
+        {
+          "name": "List My Orders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.length > 0) {",
+                  "    pm.collectionVariables.set('order_id', json.data[0]._id);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/order/list?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "order", "list"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "status", "value": "confirmed", "disabled": true }
+              ]
+            },
+            "description": "List current user's orders. Optional query: status (order_placed, confirmed, shipped, out_for_delivery, delivered)."
+          }
+        },
+        {
+          "name": "Get Order Details",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/order/{{order_id}}",
+            "description": "Get single order details (tracking, deliverTo, items, totals). Uses {{order_id}}."
           }
         }
       ]
@@ -139,12 +369,10 @@
             "header": [],
             "body": {
               "mode": "formdata",
-              "formdata": [
-                { "key": "image", "type": "file", "src": [], "description": "Image file (field name must be 'image')" }
-              ]
+              "formdata": [{ "key": "image", "type": "file", "src": [], "description": "Field name must be 'image'" }]
             },
             "url": "{{base_url}}/api/admin/upload/image",
-            "description": "Upload image (e.g. S3). Use form-data field name 'image'. Use returned URL in product/landing section bodies."
+            "description": "Upload image (e.g. S3). Use returned imageUrl in product/landing/testimonial bodies."
           }
         }
       ]
@@ -160,7 +388,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Tiny Micro Bag\",\n  \"slug\": \"tiny-micro-bag\",\n  \"description\": \"Premium micro bag\",\n  \"category\": \"purse\",\n  \"price\": 125,\n  \"salePrice\": 99,\n  \"image\": \"https://your-bucket.s3.region.amazonaws.com/uploads/product.jpg\",\n  \"tags\": [\"bestseller\", \"sale\"],\n  \"colorVariants\": [\n    { \"colorCode\": \"#000000\", \"images\": [\"https://.../black1.jpg\"] },\n    { \"colorCode\": \"#FFC0CB\", \"images\": [\"https://.../pink1.jpg\"] }\n  ],\n  \"numberOfReviews\": 83\n}"
+              "raw": "{\n  \"name\": \"Tiny Micro Bag\",\n  \"slug\": \"tiny-micro-bag\",\n  \"description\": \"Premium micro bag\",\n  \"category\": \"purse\",\n  \"price\": 125,\n  \"salePrice\": 99,\n  \"image\": \"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=800&auto=format&fit=crop\",\n  \"tags\": [\"bestseller\", \"sale\"],\n  \"colorVariants\": [\n    { \"colorCode\": \"#000000\", \"images\": [\"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=800\"] },\n    { \"colorCode\": \"#FFC0CB\", \"images\": [\"https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800\"] }\n  ],\n  \"numberOfReviews\": 83\n}"
             },
             "url": "{{base_url}}/api/admin/product/add",
             "description": "Create product. Required: name, slug, price, category (jwellery|purse). Optional: description, salePrice, image, tags, colorVariants, numberOfReviews."
@@ -177,7 +405,7 @@
               "raw": "{\n  \"name\": \"Tiny Micro Bag Updated\",\n  \"category\": \"purse\",\n  \"price\": 120,\n  \"tags\": [\"bestseller\", \"hot\"]\n}"
             },
             "url": "{{base_url}}/api/admin/product/update/{{product_id}}",
-            "description": "Update product. Set product_id from List Products response."
+            "description": "Update product. Set product_id from List Products or Add Product response."
           }
         },
         {
@@ -187,7 +415,148 @@
             "method": "DELETE",
             "header": [],
             "url": "{{base_url}}/api/admin/product/delete/{{product_id}}",
-            "description": "Delete product."
+            "description": "Soft delete product (sets is_active: false)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Testimonials",
+      "item": [
+        {
+          "name": "Add Testimonial",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data._id) {",
+                  "    pm.collectionVariables.set('testimonial_id', json.data._id);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Amazing quality and fast delivery. Will order again!\",\n  \"review\": 5,\n  \"user_name\": \"Jane Smith\",\n  \"user_address\": \"New York, USA\",\n  \"user_image\": \"https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop\"\n}"
+            },
+            "url": "{{base_url}}/api/admin/testimonial/add",
+            "description": "Create testimonial. Required: message, review (1-5), user_name. Optional: user_address, user_image."
+          }
+        },
+        {
+          "name": "List Testimonials",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.length > 0) {",
+                  "    pm.collectionVariables.set('testimonial_id', json.data[0]._id);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/testimonial/list?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "testimonial", "list"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "List all testimonials (paginated). Saves first _id to {{testimonial_id}}."
+          }
+        },
+        {
+          "name": "Update Testimonial",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Updated review text.\",\n  \"review\": 4,\n  \"user_name\": \"Jane Smith\",\n  \"user_address\": \"Brooklyn, NY\"\n}"
+            },
+            "url": "{{base_url}}/api/admin/testimonial/update/{{testimonial_id}}",
+            "description": "Update testimonial. Set testimonial_id from List or Add response."
+          }
+        },
+        {
+          "name": "Delete Testimonial",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/api/admin/testimonial/delete/{{testimonial_id}}",
+            "description": "Soft delete testimonial (sets is_active: false)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Orders",
+      "item": [
+        {
+          "name": "List All Orders",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/order/list?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "order", "list"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "status", "value": "confirmed", "disabled": true }
+              ]
+            },
+            "description": "List all orders. Optional: status."
+          }
+        },
+        {
+          "name": "Get Order Details (Admin)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/admin/order/{{order_id}}",
+            "description": "Get order details. Set order_id."
+          }
+        },
+        {
+          "name": "Update Order Status",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}"
+            },
+            "url": "{{base_url}}/api/admin/order/update-status/{{order_id}}",
+            "description": "Update order status: order_placed | confirmed | shipped | out_for_delivery | delivered."
           }
         }
       ]
@@ -197,12 +566,28 @@
       "item": [
         {
           "name": "Get All Landing Page Data",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.hero && json.data.hero._id) {",
+                  "    pm.collectionVariables.set('section_id', json.data.hero._id);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "GET",
             "header": [],
             "url": "{{base_url}}/api/admin/landing",
-            "description": "Returns all landing sections (same shape as v1/landing). Use section _id for Update Section by ID."
+            "description": "Returns all landing sections. Use section _id for Update Section. Saves hero _id to {{section_id}}."
           }
         },
         {
@@ -213,7 +598,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"order\": 1,\n  \"is_active\": true,\n  \"images\": [\"https://...\"],\n  \"price\": 99,\n  \"originalPrice\": 120\n}"
+              "raw": "{\n  \"order\": 1,\n  \"is_active\": true,\n  \"images\": [\"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=1200\"],\n  \"price\": 99,\n  \"originalPrice\": 120\n}"
             },
             "url": "{{base_url}}/api/admin/landing/section/update/{{section_id}}",
             "description": "Generic update by section _id. Set section_id from Get All Landing Page Data."
@@ -227,10 +612,10 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"images\": [\"https://your-bucket.s3.../hero.jpg\"],\n  \"price\": null,\n  \"rating\": null,\n  \"numberOfReviews\": 0\n}"
+              "raw": "{\n  \"images\": [\"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=1200\"],\n  \"price\": null,\n  \"rating\": null,\n  \"numberOfReviews\": 0\n}"
             },
             "url": "{{base_url}}/api/admin/landing/hero",
-            "description": "Create hero section (single record). Optional: images, price, rating, numberOfReviews."
+            "description": "Create hero section. Optional: images, price, rating, numberOfReviews."
           }
         },
         {
@@ -241,7 +626,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"images\": [\"https://.../hero-updated.jpg\"],\n  \"price\": 99,\n  \"rating\": 4.5,\n  \"numberOfReviews\": 42\n}"
+              "raw": "{\n  \"images\": [\"https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=1200\"],\n  \"price\": 99,\n  \"rating\": 4.5,\n  \"numberOfReviews\": 42\n}"
             },
             "url": "{{base_url}}/api/admin/landing/hero",
             "description": "Update hero section."
@@ -255,10 +640,10 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"order\": 1,\n  \"is_active\": true,\n  \"images\": [\"https://.../img1.jpg\"],\n  \"price\": 99,\n  \"originalPrice\": 120,\n  \"rating\": 4.5,\n  \"numberOfReviews\": 20,\n  \"tags\": [\"bestseller\", \"sale\"],\n  \"colors\": [\n    { \"colorCode\": \"#000\", \"images\": \"https://.../black.jpg\" },\n    { \"colorCode\": \"#fff\", \"images\": \"https://.../white.jpg\" }\n  ]\n}"
+              "raw": "{\n  \"order\": 1,\n  \"is_active\": true,\n  \"images\": [\"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=800\"],\n  \"price\": 99,\n  \"originalPrice\": 120,\n  \"rating\": 4.5,\n  \"numberOfReviews\": 20,\n  \"tags\": [\"bestseller\", \"sale\"],\n  \"colors\": [\n    { \"colorCode\": \"#000\", \"images\": \"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=400\" },\n    { \"colorCode\": \"#fff\", \"images\": \"https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400\" }\n  ]\n}"
             },
             "url": "{{base_url}}/api/admin/landing/best-collections",
-            "description": "Create best_collections section. Optional: order, is_active, images, price, originalPrice, rating, numberOfReviews, tags (bestseller|hot|trending|sale), colors[{colorCode, images}]."
+            "description": "Create best_collections section. Optional: order, is_active, images, price, originalPrice, rating, numberOfReviews, tags, colors."
           }
         },
         {
@@ -269,7 +654,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"order\": 2,\n  \"images\": [\"https://.../updated.jpg\"],\n  \"price\": 89,\n  \"tags\": [\"hot\", \"trending\"]\n}"
+              "raw": "{\n  \"order\": 2,\n  \"images\": [\"https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800\"],\n  \"price\": 89,\n  \"tags\": [\"hot\", \"trending\"]\n}"
             },
             "url": "{{base_url}}/api/admin/landing/best-collections",
             "description": "Update best_collections section."
@@ -283,10 +668,10 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"image\": \"https://your-bucket.s3.../find-perfect-purse.jpg\",\n  \"order\": 2\n}"
+              "raw": "{\n  \"image\": \"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=800&auto=format&fit=crop\",\n  \"order\": 2\n}"
             },
             "url": "{{base_url}}/api/admin/landing/find-perfect-purse",
-            "description": "Create find_perfect_purse section. Optional: image (single), order."
+            "description": "Create find_perfect_purse section. Optional: image, order."
           }
         },
         {
@@ -297,7 +682,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"image\": \"https://.../updated.jpg\",\n  \"order\": 3\n}"
+              "raw": "{\n  \"image\": \"https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&auto=format&fit=crop\",\n  \"order\": 3\n}"
             },
             "url": "{{base_url}}/api/admin/landing/find-perfect-purse",
             "description": "Update find_perfect_purse section."
@@ -311,7 +696,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"image\": \"https://your-bucket.s3.../elevate-look.jpg\",\n  \"order\": 3\n}"
+              "raw": "{\n  \"image\": \"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=800\",\n  \"order\": 3\n}"
             },
             "url": "{{base_url}}/api/admin/landing/elevate-look",
             "description": "Create elevate_look section. Optional: image, order."
@@ -325,7 +710,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"image\": \"https://.../updated.jpg\",\n  \"order\": 4\n}"
+              "raw": "{\n  \"image\": \"https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800\",\n  \"order\": 4\n}"
             },
             "url": "{{base_url}}/api/admin/landing/elevate-look",
             "description": "Update elevate_look section."
@@ -339,7 +724,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"order\": 4,\n  \"is_active\": true,\n  \"images\": [\"https://.../img1.jpg\"],\n  \"price\": 79,\n  \"originalPrice\": 99,\n  \"rating\": 4.2,\n  \"numberOfReviews\": 15,\n  \"tags\": [\"trending\"],\n  \"colors\": [\n    { \"colorCode\": \"#000\", \"images\": \"https://.../black.jpg\" }\n  ]\n}"
+              "raw": "{\n  \"order\": 4,\n  \"is_active\": true,\n  \"images\": [\"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=800\"],\n  \"price\": 79,\n  \"originalPrice\": 99,\n  \"rating\": 4.2,\n  \"numberOfReviews\": 15,\n  \"tags\": [\"trending\"],\n  \"colors\": [\n    { \"colorCode\": \"#000\", \"images\": \"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=400\" }\n  ]\n}"
             },
             "url": "{{base_url}}/api/admin/landing/fresh-styles",
             "description": "Create fresh_styles section. Same fields as best_collections."

@@ -23,6 +23,11 @@ import {
   UpdateTestimonial,
   DeleteTestimonial,
 } from "../../controller/Testimonial.js";
+import {
+  AdminListOrders,
+  AdminGetOrderDetails,
+  AdminUpdateOrderStatus,
+} from "../../controller/Order.js";
 
 const router = Router();
 
@@ -39,6 +44,11 @@ router.post("/admin/testimonial/add", Authorization, AddTestimonial);
 router.get("/admin/testimonial/list", Authorization, ListTestimonial);
 router.put("/admin/testimonial/update/:id", Authorization, UpdateTestimonial);
 router.delete("/admin/testimonial/delete/:id", Authorization, DeleteTestimonial);
+
+// Orders (admin – list, details, update status)
+router.get("/admin/order/list", Authorization, AdminListOrders);
+router.get("/admin/order/:id", Authorization, AdminGetOrderDetails);
+router.put("/admin/order/update-status/:id", Authorization, AdminUpdateOrderStatus);
 
 // Landing Section (admin) – all data in one API
 router.get("/admin/landing", Authorization, GetAllLandingPageData);

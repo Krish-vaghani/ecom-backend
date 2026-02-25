@@ -3,6 +3,19 @@ import { Login, RegisterOrRequestOtp } from "../../controller/Auth.js";
 import { ListProduct, IncrementProductView } from "../../controller/Product.js";
 import { GetAllLandingPageData } from "../../controller/LandingSection.js";
 import { ListActiveTestimonials } from "../../controller/Testimonial.js";
+import {
+  AddAddress,
+  ListAddresses,
+  GetAddress,
+  UpdateAddress,
+  DeleteAddress,
+} from "../../controller/UserAddress.js";
+import {
+  PlaceOrder,
+  ListMyOrders,
+  GetOrderDetails,
+} from "../../controller/Order.js";
+import { Authorization } from "../../middlewear/AuthMiddlewear.js";
 
 const router = Router();
 
@@ -22,5 +35,17 @@ router.get("/v1/landing", GetAllLandingPageData);
 
 // Testimonials (public – only active)
 router.get("/v1/testimonial/list", ListActiveTestimonials);
+
+// User Addresses (requires login – JWT)
+router.post("/v1/address/add", Authorization, AddAddress);
+router.get("/v1/address/list", Authorization, ListAddresses);
+router.get("/v1/address/:id", Authorization, GetAddress);
+router.put("/v1/address/update/:id", Authorization, UpdateAddress);
+router.delete("/v1/address/delete/:id", Authorization, DeleteAddress);
+
+// Orders (Cash on Delivery – requires login)
+router.post("/v1/order/place", Authorization, PlaceOrder);
+router.get("/v1/order/list", Authorization, ListMyOrders);
+router.get("/v1/order/:id", Authorization, GetOrderDetails);
 
 export default router;
