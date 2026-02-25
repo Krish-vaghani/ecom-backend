@@ -22,9 +22,17 @@ export const setupCors = (app) => {
   app.use(cors(corsOptions));
 }
 
-export const GenerateToken = (adminId) => {
+export const GenerateToken = (userId) => {
   return jwt.sign(
-    { id: adminId },
+    { id: userId },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN }
+  );
+};
+
+export const GenerateAdminToken = (adminId) => {
+  return jwt.sign(
+    { id: adminId, role: "admin" },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN }
   );

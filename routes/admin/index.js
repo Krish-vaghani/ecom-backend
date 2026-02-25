@@ -15,8 +15,9 @@ import {
   GetAllLandingPageData,
 } from "../../controller/LandingSection.js";
 import { UploadImage } from "../../controller/Upload.js";
-import { Authorization } from "../../middlewear/AuthMiddlewear.js";
+import { Authorization, AdminOnly } from "../../middlewear/AuthMiddlewear.js";
 import { upload } from "../../connection/multer.js";
+import { AdminLogin } from "../../controller/AdminAuth.js";
 import {
   AddTestimonial,
   ListTestimonial,
@@ -31,47 +32,52 @@ import {
 
 const router = Router();
 
+const adminAuth = [Authorization, AdminOnly];
+
+// Admin login (email + password) – no token required
+router.post("/admin/auth/login", AdminLogin);
+
 // Image upload (S3) – use field name "image"
-router.post("/admin/upload/image", Authorization, upload.single("image"), UploadImage);
+router.post("/admin/upload/image", ...adminAuth, upload.single("image"), UploadImage);
 
 // Product (admin CRUD)
-router.post("/admin/product/add", Authorization, AddProduct);
-router.put("/admin/product/update/:id", Authorization, UpdateProduct);
-router.delete("/admin/product/delete/:id", Authorization, DeleteProduct);
+router.post("/admin/product/add", ...adminAuth, AddProduct);
+router.put("/admin/product/update/:id", ...adminAuth, UpdateProduct);
+router.delete("/admin/product/delete/:id", ...adminAuth, DeleteProduct);
 
 // Testimonial (admin CRUD)
-router.post("/admin/testimonial/add", Authorization, AddTestimonial);
-router.get("/admin/testimonial/list", Authorization, ListTestimonial);
-router.put("/admin/testimonial/update/:id", Authorization, UpdateTestimonial);
-router.delete("/admin/testimonial/delete/:id", Authorization, DeleteTestimonial);
+router.post("/admin/testimonial/add", ...adminAuth, AddTestimonial);
+router.get("/admin/testimonial/list", ...adminAuth, ListTestimonial);
+router.put("/admin/testimonial/update/:id", ...adminAuth, UpdateTestimonial);
+router.delete("/admin/testimonial/delete/:id", ...adminAuth, DeleteTestimonial);
 
 // Orders (admin – list, details, update status)
-router.get("/admin/order/list", Authorization, AdminListOrders);
-router.get("/admin/order/:id", Authorization, AdminGetOrderDetails);
-router.put("/admin/order/update-status/:id", Authorization, AdminUpdateOrderStatus);
+router.get("/admin/order/list", ...adminAuth, AdminListOrders);
+router.get("/admin/order/:id", ...adminAuth, AdminGetOrderDetails);
+router.put("/admin/order/update-status/:id", ...adminAuth, AdminUpdateOrderStatus);
 
 // Landing Section (admin) – all data in one API
-router.get("/admin/landing", Authorization, GetAllLandingPageData);
-router.put("/admin/landing/section/update/:id", Authorization, UpdateSection);
+router.get("/admin/landing", ...adminAuth, GetAllLandingPageData);
+router.put("/admin/landing/section/update/:id", ...adminAuth, UpdateSection);
 
 // Hero section
-router.post("/admin/landing/hero", Authorization, CreateHeroSection);
-router.put("/admin/landing/hero", Authorization, UpdateHeroSection);
+router.post("/admin/landing/hero", ...adminAuth, CreateHeroSection);
+router.put("/admin/landing/hero", ...adminAuth, UpdateHeroSection);
 
 // Best collections section
-router.post("/admin/landing/best-collections", Authorization, CreateBestCollectionsSection);
-router.put("/admin/landing/best-collections", Authorization, UpdateBestCollectionsSection);
+router.post("/admin/landing/best-collections", ...adminAuth, CreateBestCollectionsSection);
+router.put("/admin/landing/best-collections", ...adminAuth, UpdateBestCollectionsSection);
 
 // Find perfect purse section
-router.post("/admin/landing/find-perfect-purse", Authorization, CreateFindPerfectPurseSection);
-router.put("/admin/landing/find-perfect-purse", Authorization, UpdateFindPerfectPurseSection);
+router.post("/admin/landing/find-perfect-purse", ...adminAuth, CreateFindPerfectPurseSection);
+router.put("/admin/landing/find-perfect-purse", ...adminAuth, UpdateFindPerfectPurseSection);
 
 // Elevate look section
-router.post("/admin/landing/elevate-look", Authorization, CreateElevateLookSection);
-router.put("/admin/landing/elevate-look", Authorization, UpdateElevateLookSection);
+router.post("/admin/landing/elevate-look", ...adminAuth, CreateElevateLookSection);
+router.put("/admin/landing/elevate-look", ...adminAuth, UpdateElevateLookSection);
 
 // Fresh styles section
-router.post("/admin/landing/fresh-styles", Authorization, CreateFreshStylesSection);
-router.put("/admin/landing/fresh-styles", Authorization, UpdateFreshStylesSection);
+router.post("/admin/landing/fresh-styles", ...adminAuth, CreateFreshStylesSection);
+router.put("/admin/landing/fresh-styles", ...adminAuth, UpdateFreshStylesSection);
 
 export default router;

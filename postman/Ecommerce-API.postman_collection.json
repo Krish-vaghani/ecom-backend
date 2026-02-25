@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "E-commerce API",
-    "description": "Complete API collection (folder-wise).\n\n**Auth flow:** Run **Register or Request OTP** → then **Verify OTP (Login)**. Token is saved to `{{token}}` for Admin requests.\n\n**Variables:** base_url, token, phone, otp, product_id, section_id, testimonial_id, address_id, order_id",
+    "description": "Complete API collection (folder-wise).\n\n**User auth:** Register or Request OTP → Verify OTP (Login). **Admin auth:** Admin Login (email + password). Token saved to `{{token}}`.\n\n**Variables:** base_url, token, phone, otp, product_id, section_id, testimonial_id, address_id, order_id",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -354,6 +354,40 @@
             "header": [],
             "url": "{{base_url}}/api/v1/order/{{order_id}}",
             "description": "Get single order details (tracking, deliverTo, items, totals). Uses {{order_id}}."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Auth",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.token) {",
+                  "    pm.collectionVariables.set('token', json.data.token);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"your_password\"\n}"
+            },
+            "url": "{{base_url}}/api/admin/auth/login",
+            "description": "Admin login with email and password. Saves token to {{token}} for other Admin requests."
           }
         }
       ]

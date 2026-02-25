@@ -9,7 +9,7 @@ export const Authorization = async (req, res, next) => {
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res
       .status(401)
-      .json({ message: Constant.TOKENNOT || "Token missing or invalid." });
+      .json({ message: Constant.TOKEN_NOT || "Token missing or invalid." });
   }
 
   const token = authHeader.split(" ")[1];
@@ -31,7 +31,14 @@ export const Authorization = async (req, res, next) => {
       });
       
     }
-     req.user = decodedToken; 
+    req.user = decodedToken;
     next();
   });
+};
+
+export const AdminOnly = (req, res, next) => {
+  if (req.user && req.user.role === "admin") {
+    return next();
+  }
+  return res.status(403).json({ message: "Admin access required." });
 };
