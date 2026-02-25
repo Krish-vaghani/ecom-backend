@@ -17,6 +17,12 @@ import {
 import { UploadImage } from "../../controller/Upload.js";
 import { Authorization } from "../../middlewear/AuthMiddlewear.js";
 import { upload } from "../../connection/multer.js";
+import {
+  AddTestimonial,
+  ListTestimonial,
+  UpdateTestimonial,
+  DeleteTestimonial,
+} from "../../controller/Testimonial.js";
 
 const router = Router();
 
@@ -27,6 +33,12 @@ router.post("/admin/upload/image", Authorization, upload.single("image"), Upload
 router.post("/admin/product/add", Authorization, AddProduct);
 router.put("/admin/product/update/:id", Authorization, UpdateProduct);
 router.delete("/admin/product/delete/:id", Authorization, DeleteProduct);
+
+// Testimonial (admin CRUD)
+router.post("/admin/testimonial/add", Authorization, AddTestimonial);
+router.get("/admin/testimonial/list", Authorization, ListTestimonial);
+router.put("/admin/testimonial/update/:id", Authorization, UpdateTestimonial);
+router.delete("/admin/testimonial/delete/:id", Authorization, DeleteTestimonial);
 
 // Landing Section (admin) – all data in one API
 router.get("/admin/landing", Authorization, GetAllLandingPageData);

@@ -75,3 +75,26 @@ export const DeleteProduct = async (req, res) => {
     return res.status(500).json({ message: "Server error.", error: err.message });
   }
 };
+
+/** Increment product view count. Call when a product is viewed (e.g. product detail page). */
+export const IncrementProductView = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const updated = await Product.findOneAndUpdate(
+      { _id: id, is_active: true },
+      { $inc: { viewCount: 1 } },
+      { new: true }
+    ).lean();
+
+    if (!updated) {
+      return res.status(404).json({ message: "Product not found." });
+    }
+
+    return res.status(200).json({
+      message: "Product view recorded.",
+      data: { viewCount: updated.viewCount },
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Server error.", error: err.message });
+  }
+};

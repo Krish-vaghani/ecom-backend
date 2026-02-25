@@ -22,6 +22,7 @@ const ProductSchema = new mongoose.Schema(
       }
     ],
     numberOfReviews: { type: Number, default: 0 },
+    viewCount: { type: Number, default: 0 },
     is_active: { type: Boolean, default: true },
   },
   { timestamps: true }
