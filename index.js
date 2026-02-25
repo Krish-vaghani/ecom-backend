@@ -12,7 +12,7 @@ connectDb();
 const app = express();
 
 // Allow larger request bodies (e.g. for uploads via proxy)
-const bodyLimit = "15mb";
+const bodyLimit = "150mb";
 app.use(express.json({ limit: bodyLimit }));
 app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
 setupCors(app);
