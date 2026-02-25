@@ -6,8 +6,8 @@ import Admin from "../models/Admin.js";
 dotenv.config();
 
 async function createAdmin() {
-  const email = process.env.ADMIN_EMAIL || process.argv[2];
-  const password = process.env.ADMIN_PASSWORD || process.argv[3];
+  const email = process.env.ADMIN_EMAIL || "admin@example.com";
+  const password = process.env.ADMIN_PASSWORD || "Test@123";
   if (!email || !password) {
     console.error("Usage: node scripts/create-admin.js <email> <password>");
     console.error("Or set ADMIN_EMAIL and ADMIN_PASSWORD in .env");

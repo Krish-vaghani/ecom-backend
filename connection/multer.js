@@ -13,10 +13,13 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+// 15MB max file size for image uploads
+const MAX_FILE_SIZE = 150 * 1024 * 1024;
+
 export const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: MAX_FILE_SIZE },
 });
 
 export const randomImageName = (bytes = 16) => crypto.randomBytes(bytes).toString("hex");
