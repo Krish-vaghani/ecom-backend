@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "E-commerce API",
-    "description": "Complete API collection (folder-wise).\n\n**User auth:** Register or Request OTP → Verify OTP (Login). **Admin auth:** Admin Login (email + password). Token saved to `{{token}}`.\n\n**Variables:** base_url, token, phone, otp, product_id, section_id, testimonial_id, address_id, order_id",
+    "description": "Complete API collection (folder-wise).\n\n**User auth:** Register or Request OTP → Verify OTP (Login). **Admin auth:** Admin Login (email + password). Token saved to `{{token}}`.\n\n**Variables:** base_url, token, phone, otp, product_id, section_id, testimonial_id, address_id, order_id, orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature (Razorpay).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -13,7 +13,11 @@
     { "key": "section_id", "value": "" },
     { "key": "testimonial_id", "value": "" },
     { "key": "address_id", "value": "" },
-    { "key": "order_id", "value": "" }
+    { "key": "order_id", "value": "" },
+    { "key": "orderId", "value": "" },
+    { "key": "razorpay_order_id", "value": "" },
+    { "key": "razorpay_payment_id", "value": "" },
+    { "key": "razorpay_signature", "value": "" }
   ],
   "item": [
     {
@@ -309,6 +313,54 @@
             },
             "url": "{{base_url}}/api/v1/order/place",
             "description": "Place order with Cash on Delivery. Requires login. Use address_id and product_id from List Addresses / List Products."
+          }
+        },
+        {
+          "name": "Create Razorpay Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.order) {",
+                  "    pm.collectionVariables.set('order_id', json.data.order._id);",
+                  "    pm.collectionVariables.set('orderId', json.data.order.orderId);",
+                  "  }",
+                  "  if (json.data && json.data.razorpayOrderId) {",
+                  "    pm.collectionVariables.set('razorpay_order_id', json.data.razorpayOrderId);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"addressId\": \"{{address_id}}\",\n  \"items\": [\n    { \"productId\": \"{{product_id}}\", \"quantity\": 2 }\n  ]\n}"
+            },
+            "url": "{{base_url}}/api/v1/order/create-razorpay-order",
+            "description": "Create order with Razorpay. Returns order, razorpayOrderId, key_id, amount, currency. Use key_id and razorpayOrderId in frontend Checkout. After payment, call Verify Razorpay Payment with razorpay_order_id, razorpay_payment_id, razorpay_signature from Checkout success."
+          }
+        },
+        {
+          "name": "Verify Razorpay Payment",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"razorpay_order_id\": \"{{razorpay_order_id}}\",\n  \"razorpay_payment_id\": \"{{razorpay_payment_id}}\",\n  \"razorpay_signature\": \"{{razorpay_signature}}\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/order/verify-razorpay-payment",
+            "description": "Verify payment after Razorpay Checkout success. Run Create Razorpay Order first (sets orderId, razorpay_order_id). Paste razorpay_payment_id and razorpay_signature from frontend Checkout success handler into collection variables, then send."
           }
         },
         {

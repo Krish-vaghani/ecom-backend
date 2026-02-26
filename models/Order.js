@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 const ORDER_STATUS = ["order_placed", "confirmed", "shipped", "out_for_delivery", "delivered"];
+const PAYMENT_METHODS = ["cash_on_delivery", "razorpay"];
 const PAYMENT_METHOD = "cash_on_delivery";
 
 const DeliverToSchema = new mongoose.Schema(
@@ -40,8 +41,10 @@ const OrderSchema = new mongoose.Schema(
       enum: ORDER_STATUS,
       default: "order_placed",
     },
-    paymentMethod: { type: String, default: PAYMENT_METHOD },
-    paymentStatus: { type: String, enum: ["pending", "confirmed"], default: "pending" },
+    paymentMethod: { type: String, enum: PAYMENT_METHODS, default: PAYMENT_METHOD },
+    paymentStatus: { type: String, enum: ["pending", "confirmed", "failed"], default: "pending" },
+    razorpayOrderId: { type: String, default: null },
+    razorpayPaymentId: { type: String, default: null },
     placedAt: { type: Date, default: Date.now },
     confirmedAt: { type: Date, default: null },
     shippedAt: { type: Date, default: null },
@@ -62,4 +65,4 @@ OrderSchema.index({ orderId: 1 });
 
 const Order = mongoose.model("Order", OrderSchema);
 export default Order;
-export { ORDER_STATUS, PAYMENT_METHOD };
+export { ORDER_STATUS, PAYMENT_METHOD, PAYMENT_METHODS };

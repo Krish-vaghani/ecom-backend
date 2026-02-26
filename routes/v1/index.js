@@ -12,6 +12,8 @@ import {
 } from "../../controller/UserAddress.js";
 import {
   PlaceOrder,
+  CreateRazorpayOrder,
+  VerifyRazorpayPayment,
   ListMyOrders,
   GetOrderDetails,
 } from "../../controller/Order.js";
@@ -43,8 +45,10 @@ router.get("/v1/address/:id", Authorization, GetAddress);
 router.put("/v1/address/update/:id", Authorization, UpdateAddress);
 router.delete("/v1/address/delete/:id", Authorization, DeleteAddress);
 
-// Orders (Cash on Delivery – requires login)
-router.post("/v1/order/place", Authorization, PlaceOrder);
+// Orders (requires login)
+router.post("/v1/order/place", Authorization, PlaceOrder); // Cash on Delivery
+router.post("/v1/order/create-razorpay-order", Authorization, CreateRazorpayOrder);
+router.post("/v1/order/verify-razorpay-payment", Authorization, VerifyRazorpayPayment);
 router.get("/v1/order/list", Authorization, ListMyOrders);
 router.get("/v1/order/:id", Authorization, GetOrderDetails);
 

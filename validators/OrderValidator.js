@@ -26,3 +26,13 @@ export const UpdateOrderStatusValidator = Joi.object({
       "any.only": "Status must be one of: order_placed, confirmed, shipped, out_for_delivery, delivered",
     }),
 });
+
+// Same body as place order: used for creating Razorpay order
+export const CreateRazorpayOrderValidator = PlaceOrderValidator;
+
+export const VerifyRazorpayPaymentValidator = Joi.object({
+  orderId: Joi.string().required().messages({ "any.required": "orderId (your order ID) is required." }),
+  razorpay_order_id: Joi.string().required().messages({ "any.required": "razorpay_order_id is required." }),
+  razorpay_payment_id: Joi.string().required().messages({ "any.required": "razorpay_payment_id is required." }),
+  razorpay_signature: Joi.string().required().messages({ "any.required": "razorpay_signature is required." }),
+});

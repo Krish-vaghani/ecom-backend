@@ -112,6 +112,8 @@ Common: title, subtitle, description, order, is_active, image, images.
    - `PORT` – Server port (default 3000)
    - `JWT_SECRET` – Secret for JWT
    - `JWT_EXPIRES_IN` – e.g. `7d`
+   - `RAZORPAY_KEY_ID` – Razorpay API key (for online payments)
+   - `RAZORPAY_KEY_SECRET` – Razorpay API secret
 
 ## Run
 
@@ -144,5 +146,22 @@ Common: title, subtitle, description, order, is_active, image, images.
 | GET    | /v1/feature/list | No  | List features (Crafted For Confidence) |
 | PUT    | /v1/feature/update/:id | Yes | Update feature |
 | DELETE | /v1/feature/delete/:id | Yes | Soft delete feature |
+| POST   | /v1/order/place | Yes | Place order (Cash on Delivery). Body: addressId, items: [{ productId, quantity }] |
+| POST   | /v1/order/create-razorpay-order | Yes | Create order + Razorpay order for online payment. Same body as place. Returns order, razorpayOrderId, key_id |
+| POST   | /v1/order/verify-razorpay-payment | Yes | Verify payment after Checkout. Body: orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature |
+| GET    | /v1/order/list | Yes | List my orders (?page, limit, status) |
+| GET    | /v1/order/:id | Yes | Get order details |
 
 Protected routes use header: `Authorization: Bearer <token>`.
+
+### Razorpay payment flow
+
+1. **Create order and get Razorpay details**  
+   `POST /api/v1/order/create-razorpay-order` with `addressId` and `items` (same as place order). Response includes `data.order`, `data.razorpayOrderId`, `data.key_id`, `data.amount`, `data.currency`.
+
+2. **Open Razorpay Checkout** on the frontend using [Razorpay Checkout](https://razorpay.com/docs/payments/payment-gateway/web-integration/standard/checkout-form/) with `key_id`, `order_id` (razorpayOrderId), `amount`, and your `orderId` (for reference).
+
+3. **On payment success**, call **Verify payment**:  
+   `POST /api/v1/order/verify-razorpay-payment` with body:  
+   `{ orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature }` (values from Checkout success handler).  
+   Backend verifies the signature and sets `paymentStatus` to `confirmed`.
