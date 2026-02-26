@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "nodemon index.js",
-    "dev": "node index.js"
+    "dev": "node index.js",
+    "seed": "node scripts/seed-dummy-data.js"
   },
   "author": "",
   "license": "ISC",

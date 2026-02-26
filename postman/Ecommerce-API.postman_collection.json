@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "E-commerce API",
-    "description": "Complete API collection (folder-wise).\n\n**User auth:** Register or Request OTP → Verify OTP (Login). **Admin auth:** Admin Login (email + password). Token saved to `{{token}}`.\n\n**Variables:** base_url, token, phone, otp, product_id, section_id, testimonial_id, address_id, order_id, orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature (Razorpay).",
+    "description": "Complete API collection (folder-wise).\n\n**User auth:** Register or Request OTP → Verify OTP (Login). **Admin auth:** Admin Login (email + password). Token saved to `{{token}}`.\n\n**v1 - Cart:** Add/Update/Remove/Get cart (uses {{product_id}}). **v1 - Wishlist:** Add/Remove/List/Check wishlist (whitelisted products).\n\n**Variables:** base_url, token, phone, otp, product_id, section_id, testimonial_id, address_id, order_id, orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature (Razorpay).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -278,6 +278,101 @@
             "header": [],
             "url": "{{base_url}}/api/v1/address/delete/{{address_id}}",
             "description": "Delete address. Requires login."
+          }
+        }
+      ]
+    },
+    {
+      "name": "v1 - Cart",
+      "item": [
+        {
+          "name": "Add to Cart",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"productId\": \"{{product_id}}\",\n  \"quantity\": 1\n}" },
+            "url": "{{base_url}}/api/v1/cart/add",
+            "description": "Add product to cart (or increase quantity if already in cart). Requires login. Uses {{product_id}} from List Products."
+          }
+        },
+        {
+          "name": "Update Cart Item",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"productId\": \"{{product_id}}\",\n  \"quantity\": 2\n}" },
+            "url": "{{base_url}}/api/v1/cart/update",
+            "description": "Update quantity for a product in cart. Requires login."
+          }
+        },
+        {
+          "name": "Remove from Cart",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "DELETE",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"productId\": \"{{product_id}}\"\n}" },
+            "url": "{{base_url}}/api/v1/cart/remove",
+            "description": "Remove product from cart. Requires login."
+          }
+        },
+        {
+          "name": "Get Cart",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/cart",
+            "description": "Get current user's cart with product details. Requires login."
+          }
+        }
+      ]
+    },
+    {
+      "name": "v1 - Wishlist",
+      "item": [
+        {
+          "name": "Add to Wishlist",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"productId\": \"{{product_id}}\"\n}" },
+            "url": "{{base_url}}/api/v1/wishlist/add",
+            "description": "Add product to wishlist (whitelisted). Requires login. Uses {{product_id}} from List Products."
+          }
+        },
+        {
+          "name": "Remove from Wishlist",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "DELETE",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"productId\": \"{{product_id}}\"\n}" },
+            "url": "{{base_url}}/api/v1/wishlist/remove",
+            "description": "Remove product from wishlist. Requires login."
+          }
+        },
+        {
+          "name": "List Wishlist",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/wishlist",
+            "description": "List all wishlisted products. Requires login."
+          }
+        },
+        {
+          "name": "Check Wishlist",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/wishlist/check/{{product_id}}",
+            "description": "Check if a product is in wishlist. Returns { productId, inWishlist }. Requires login."
           }
         }
       ]

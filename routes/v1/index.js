@@ -17,6 +17,13 @@ import {
   ListMyOrders,
   GetOrderDetails,
 } from "../../controller/Order.js";
+import { AddToCart, UpdateCartItem, RemoveFromCart, GetCart } from "../../controller/Cart.js";
+import {
+  AddToWishlist,
+  RemoveFromWishlist,
+  ListWishlist,
+  CheckWishlist,
+} from "../../controller/Wishlist.js";
 import { Authorization } from "../../middlewear/AuthMiddlewear.js";
 
 const router = Router();
@@ -44,6 +51,18 @@ router.get("/v1/address/list", Authorization, ListAddresses);
 router.get("/v1/address/:id", Authorization, GetAddress);
 router.put("/v1/address/update/:id", Authorization, UpdateAddress);
 router.delete("/v1/address/delete/:id", Authorization, DeleteAddress);
+
+// Cart (requires login)
+router.post("/v1/cart/add", Authorization, AddToCart);
+router.put("/v1/cart/update", Authorization, UpdateCartItem);
+router.delete("/v1/cart/remove", Authorization, RemoveFromCart);
+router.get("/v1/cart", Authorization, GetCart);
+
+// Wishlist / Whitelisted products (requires login)
+router.post("/v1/wishlist/add", Authorization, AddToWishlist);
+router.delete("/v1/wishlist/remove", Authorization, RemoveFromWishlist);
+router.get("/v1/wishlist", Authorization, ListWishlist);
+router.get("/v1/wishlist/check/:productId", Authorization, CheckWishlist);
 
 // Orders (requires login)
 router.post("/v1/order/place", Authorization, PlaceOrder); // Cash on Delivery
