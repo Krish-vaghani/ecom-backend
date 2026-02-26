@@ -1,9 +1,10 @@
 /**
- * Seed script: adds dummy data to all collections.
- * - Products: 40 items (purse & jewellery) with original-like names and purse/handbag images
- * - LandingSection, Testimonial, User, UserAddress, Order
+ * Reset products and home page (landing) data, then add new data.
+ * - Deletes: ProductReview, Product, LandingSection
+ * - Clears: User cart and wishlist (so they don't reference removed products)
+ * - Seeds: New products (40), product reviews, landing sections
  *
- * Run: node scripts/seed-dummy-data.js
+ * Run: node scripts/reset-products-and-landing.js
  */
 
 import dotenv from "dotenv";
@@ -11,14 +12,10 @@ import mongoose from "mongoose";
 import Product from "../models/Product.js";
 import ProductReview from "../models/ProductReview.js";
 import LandingSection from "../models/LandingSection.js";
-import Testimonial from "../models/Testimonial.js";
 import User from "../models/User.js";
-import UserAddress from "../models/UserAddress.js";
-import Order from "../models/Order.js";
 
 dotenv.config();
 
-// --- Purse / handbag image URLs (Unsplash, free to use) ---
 const PURSE_IMAGES = [
   "https://images.unsplash.com/photo-1548036328-c9fa89d128fa",
   "https://images.unsplash.com/photo-1591561954557-26941169b49e",
@@ -62,17 +59,13 @@ const PURSE_IMAGES = [
 ];
 
 function slugify(name) {
-  return name
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "");
+  return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 }
 
-// --- 40 product names (purse / handbag style, original-like) ---
 const PRODUCT_NAMES = [
-  "Classic Leather Crossbody Bag",
-  "Vintage Shoulder Purse",
-  "Mini Chain Strap Handbag",
+  "Ladies Hand Bag Classic Leather",
+  "Bloom Mini Tote",
+  "Compact Crossbody Bag",
   "Structured Top Handle Tote",
   "Quilted Flap Bag",
   "Saffiano Leather Satchel",
@@ -112,7 +105,6 @@ const PRODUCT_NAMES = [
   "Straw and Leather Crossbody",
 ];
 
-// Ensure we have 40 names (add more if needed)
 while (PRODUCT_NAMES.length < 40) {
   PRODUCT_NAMES.push(`Designer Purse Style ${PRODUCT_NAMES.length + 1}`);
 }
@@ -162,9 +154,11 @@ const REVIEWER_NAMES = [
   "Aisha P.", "Meera N.", "Divya R.", "Pooja K.", "Shruti T.",
 ];
 
-function pick(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
+const USER_AVATARS = [
+  "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
+  "https://images.unsplash.com/photo-1438761681033-6461ffad8d80",
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+];
 
 const LANDING_SECTION_KEYS = [
   "hero",
@@ -176,19 +170,20 @@ const LANDING_SECTION_KEYS = [
   "crafted_confidence",
 ];
 
-const TESTIMONIALS = [
-  { message: "Beautiful quality and fast delivery. My purse gets compliments every day!", review: 5, user_name: "Priya S.", user_address: "Mumbai, India" },
-  { message: "Exactly as shown. Perfect size for everyday use. Highly recommend.", review: 5, user_name: "Anita K.", user_address: "Delhi, India" },
-  { message: "Great craftsmanship. The leather feels premium. Will order again.", review: 4, user_name: "Riya M.", user_address: "Bangalore, India" },
-  { message: "Lovely design and sturdy. Worth every rupee.", review: 5, user_name: "Neha R.", user_address: "Pune, India" },
-  { message: "Super happy with my purchase. Packaging was also very nice.", review: 5, user_name: "Kavya L.", user_address: "Hyderabad, India" },
-];
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
-const USER_AVATARS = [
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
-  "https://images.unsplash.com/photo-1438761681033-6461ffad8d80",
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
-];
+async function clearProductsAndLanding() {
+  await ProductReview.deleteMany({});
+  console.log("ProductReview: deleted all");
+  await Product.deleteMany({});
+  console.log("Product: deleted all");
+  await LandingSection.deleteMany({});
+  console.log("LandingSection: deleted all");
+  await User.updateMany({}, { $set: { cartItems: [], wishlist: [] } });
+  console.log("User: cleared cart and wishlist for all users");
+}
 
 async function seedProducts() {
   const tags = ["bestseller", "hot", "trending", "sale"];
@@ -202,7 +197,7 @@ async function seedProducts() {
     usedSlugs.add(slug);
 
     const price = Math.round(1200 + Math.random() * 8800);
-    const onSale = Math.random() > 0.6;
+    const onSale = Math.random() > 0.5;
     const salePrice = onSale ? Math.round(price * (0.7 + Math.random() * 0.25)) : null;
     const productTags = [];
     if (Math.random() > 0.7) productTags.push(tags[Math.floor(Math.random() * tags.length)]);
@@ -238,14 +233,12 @@ async function seedProducts() {
     });
   }
 
-  await Product.deleteMany({});
   const inserted = await Product.insertMany(products);
   console.log("Products: inserted", inserted.length);
   return inserted;
 }
 
 async function seedProductReviews(products) {
-  await ProductReview.deleteMany({});
   const reviews = [];
   for (const product of products) {
     const numReviews = 3 + Math.floor(Math.random() * 6);
@@ -266,7 +259,6 @@ async function seedProductReviews(products) {
 }
 
 async function seedLandingSections() {
-  await LandingSection.deleteMany({});
   const sections = LANDING_SECTION_KEYS.map((sectionKey, idx) => ({
     sectionKey,
     order: idx,
@@ -284,148 +276,6 @@ async function seedLandingSections() {
   return inserted;
 }
 
-async function seedTestimonials() {
-  await Testimonial.deleteMany({});
-  const data = TESTIMONIALS.map((t, i) => ({
-    ...t,
-    user_image: USER_AVATARS[i % USER_AVATARS.length],
-    is_active: true,
-  }));
-  const inserted = await Testimonial.insertMany(data);
-  console.log("Testimonials: inserted", inserted.length);
-  return inserted;
-}
-
-async function seedUsers() {
-  await User.deleteMany({});
-  const users = [
-    { name: "Demo User One", phone: "9876543210", email: "demo1@example.com", cartItems: [], wishlist: [] },
-    { name: "Demo User Two", phone: "9876543211", email: "demo2@example.com", cartItems: [], wishlist: [] },
-    { name: "Demo User Three", phone: "9876543212", email: null, cartItems: [], wishlist: [] },
-  ];
-  const inserted = await User.insertMany(users);
-  console.log("Users: inserted", inserted.length);
-  return inserted;
-}
-
-async function seedUserAddresses(users) {
-  await UserAddress.deleteMany({});
-  const addresses = [];
-  const cities = ["Mumbai", "Delhi", "Bangalore", "Pune", "Hyderabad"];
-  const states = ["Maharashtra", "Delhi", "Karnataka", "Maharashtra", "Telangana"];
-  const pincodes = ["400001", "110001", "560001", "411001", "500001"];
-
-  users.forEach((user, uIdx) => {
-    addresses.push({
-      user: user._id,
-      address_type: "Home",
-      full_name: user.name,
-      mobile_number: user.phone,
-      email_address: user.email || "user@example.com",
-      address_line_1: `${100 + uIdx} Main Street, Block ${uIdx + 1}`,
-      address_line_2: "Near Central Market",
-      pincode: pincodes[uIdx % pincodes.length],
-      city: cities[uIdx % cities.length],
-      state: states[uIdx % states.length],
-      landmark: "Opposite Park",
-      is_default: true,
-    });
-    addresses.push({
-      user: user._id,
-      address_type: "Office",
-      full_name: user.name,
-      mobile_number: user.phone,
-      email_address: user.email || "user@example.com",
-      address_line_1: `${200 + uIdx} Business Park`,
-      address_line_2: "Tower B",
-      pincode: pincodes[(uIdx + 1) % pincodes.length],
-      city: cities[(uIdx + 1) % cities.length],
-      state: states[(uIdx + 1) % states.length],
-      landmark: "",
-      is_default: false,
-    });
-  });
-
-  const inserted = await UserAddress.insertMany(addresses);
-  console.log("UserAddresses: inserted", inserted.length);
-  return inserted;
-}
-
-function generateOrderId() {
-  return "ORD" + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 8).toUpperCase();
-}
-
-async function seedOrders(users, products) {
-  await Order.deleteMany({});
-  const orders = [];
-  const statuses = ["order_placed", "confirmed", "shipped", "out_for_delivery", "delivered"];
-  const cities = ["Mumbai", "Delhi", "Bangalore"];
-  const states = ["Maharashtra", "Delhi", "Karnataka"];
-  const pincodes = ["400001", "110001", "560001"];
-
-  for (let o = 0; o < 8; o++) {
-    const user = users[o % users.length];
-    const numItems = 1 + Math.floor(Math.random() * 3);
-    const selectedProducts = [];
-    const used = new Set();
-    while (selectedProducts.length < numItems) {
-      const p = products[Math.floor(Math.random() * products.length)];
-      if (!used.has(p._id.toString())) {
-        used.add(p._id.toString());
-        selectedProducts.push(p);
-      }
-    }
-
-    let subtotal = 0;
-    const items = selectedProducts.map((p) => {
-      const qty = 1 + Math.floor(Math.random() * 2);
-      const pricePerItem = p.salePrice ?? p.price;
-      const totalForItem = pricePerItem * qty;
-      subtotal += totalForItem;
-      return {
-        product: p._id,
-        productName: p.name,
-        quantity: qty,
-        pricePerItem,
-        originalPrice: p.salePrice ? p.price : null,
-        totalForItem,
-      };
-    });
-
-    const shippingCharge = subtotal >= 2000 ? 0 : 99;
-    const total = subtotal + shippingCharge;
-    const status = statuses[Math.min(o, statuses.length - 1)];
-    const idx = o % 3;
-
-    orders.push({
-      orderId: generateOrderId(),
-      user: user._id,
-      status,
-      paymentMethod: Math.random() > 0.5 ? "cash_on_delivery" : "razorpay",
-      paymentStatus: status === "order_placed" ? "pending" : "confirmed",
-      deliverTo: {
-        fullName: user.name,
-        addressLine1: `${100 + o} Main Street`,
-        addressLine2: "Block A",
-        city: cities[idx],
-        state: states[idx],
-        pincode: pincodes[idx],
-        phone: user.phone,
-        email: user.email || "customer@example.com",
-        landmark: "Near Park",
-      },
-      items,
-      subtotal,
-      shippingCharge,
-      total,
-    });
-  }
-
-  const inserted = await Order.insertMany(orders);
-  console.log("Orders: inserted", inserted.length);
-  return inserted;
-}
-
 async function run() {
   if (!process.env.MONGO_URI) {
     console.error("MONGO_URI not set in .env");
@@ -434,19 +284,19 @@ async function run() {
 
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log("Connected to MongoDB. Seeding...\n");
+    console.log("Connected to MongoDB.\n");
 
+    console.log("--- Clearing products and home page data ---");
+    await clearProductsAndLanding();
+
+    console.log("\n--- Adding new data ---");
     const products = await seedProducts();
     await seedProductReviews(products);
     await seedLandingSections();
-    await seedTestimonials();
-    const users = await seedUsers();
-    await seedUserAddresses(users);
-    await seedOrders(users, products);
 
-    console.log("\nSeed completed successfully.");
+    console.log("\nReset and seed completed successfully.");
   } catch (err) {
-    console.error("Seed failed:", err.message);
+    console.error("Script failed:", err.message);
     process.exit(1);
   } finally {
     await mongoose.disconnect();

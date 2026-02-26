@@ -26,6 +26,12 @@ export const ProductValidator = Joi.object({
     .items(Joi.string().valid("bestseller", "hot", "trending", "sale"))
     .optional(),
   colorVariants: Joi.array().items(ColorVariantSchema).optional(),
+  shortDescription: Joi.string().allow("").optional(),
+  dimensions: Joi.object({
+    heightCm: Joi.number().min(0).allow(null).optional(),
+    widthCm: Joi.number().min(0).allow(null).optional(),
+    depthCm: Joi.number().min(0).allow(null).optional(),
+  }).optional(),
   averageRating: Joi.number().min(0).max(5).optional(),
   numberOfReviews: Joi.number().min(0).optional(),
   isFeatured: Joi.boolean().optional(),
@@ -44,6 +50,12 @@ export const UpdateProductValidator = Joi.object({
     .items(Joi.string().valid("bestseller", "hot", "trending", "sale"))
     .optional(),
   colorVariants: Joi.array().items(ColorVariantSchema).optional(),
+  shortDescription: Joi.string().allow("").optional(),
+  dimensions: Joi.object({
+    heightCm: Joi.number().min(0).allow(null).optional(),
+    widthCm: Joi.number().min(0).allow(null).optional(),
+    depthCm: Joi.number().min(0).allow(null).optional(),
+  }).optional(),
   averageRating: Joi.number().min(0).max(5).optional(),
   numberOfReviews: Joi.number().min(0).optional(),
   isFeatured: Joi.boolean().optional(),

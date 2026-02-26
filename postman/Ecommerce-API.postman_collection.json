@@ -136,6 +136,23 @@
           }
         },
         {
+          "name": "Get Product Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/product/detail/{{product_id}}?reviewPage=1&reviewLimit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "product", "detail", "{{product_id}}"],
+              "query": [
+                { "key": "reviewPage", "value": "1", "description": "Reviews pagination page" },
+                { "key": "reviewLimit", "value": "10", "description": "Reviews per page" }
+              ]
+            },
+            "description": "Get full product detail by id: name, shortDescription, description, price, salePrice, currentPrice, savings, dimensions, images, colorVariants, averageRating, numberOfReviews, starBreakdown (1-5), and paginated reviews. Use ?slug=xxx instead of path id to fetch by slug."
+          }
+        },
+        {
           "name": "Increment Product View",
           "request": {
             "method": "POST",

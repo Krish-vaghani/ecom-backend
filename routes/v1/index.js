@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { Login, RegisterOrRequestOtp } from "../../controller/Auth.js";
-import { ListProduct, IncrementProductView } from "../../controller/Product.js";
+import { ListProduct, GetProductDetail, IncrementProductView } from "../../controller/Product.js";
 import { GetAllLandingPageData } from "../../controller/LandingSection.js";
 import { ListActiveTestimonials } from "../../controller/Testimonial.js";
 import {
@@ -36,6 +36,7 @@ router.post("/v1/auth/login", Login);
 
 // Product (read only)
 router.get("/v1/product/list", ListProduct);
+router.get("/v1/product/detail/:id", GetProductDetail);
 // Increment product view (call when user views product detail)
 router.post("/v1/product/:id/view", IncrementProductView);
 
