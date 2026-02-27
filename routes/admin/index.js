@@ -29,6 +29,11 @@ import {
   AdminGetOrderDetails,
   AdminUpdateOrderStatus,
 } from "../../controller/Order.js";
+import {
+  CreateShipment,
+  GenerateLabel,
+  RequestPickup,
+} from "../../controller/Shipping.js";
 
 const router = Router();
 
@@ -55,6 +60,10 @@ router.delete("/admin/testimonial/delete/:id", ...adminAuth, DeleteTestimonial);
 router.get("/admin/order/list", ...adminAuth, AdminListOrders);
 router.get("/admin/order/:id", ...adminAuth, AdminGetOrderDetails);
 router.put("/admin/order/update-status/:id", ...adminAuth, AdminUpdateOrderStatus);
+// Shiprocket – create shipment, label, pickup
+router.post("/admin/order/:id/create-shipment", ...adminAuth, CreateShipment);
+router.post("/admin/order/:id/generate-label", ...adminAuth, GenerateLabel);
+router.post("/admin/order/:id/request-pickup", ...adminAuth, RequestPickup);
 
 // Landing Section (admin) – all data in one API
 router.get("/admin/landing", ...adminAuth, GetAllLandingPageData);

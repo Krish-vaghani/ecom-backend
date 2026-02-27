@@ -13,6 +13,7 @@ import {
   getRazorpayKeyId,
   verifyPaymentSignature,
 } from "../connection/razorpay.js";
+import { getShippingChargeForItems } from "../helper/shippingRates.js";
 
 const getUserId = (req) => req.user?.id || req.user?._id;
 
@@ -84,7 +85,7 @@ export const PlaceOrder = async (req, res) => {
       });
     }
 
-    const shippingCharge = 0;
+    const shippingCharge = await getShippingChargeForItems(items, address.pincode, true);
     const total = subtotal + shippingCharge;
     const estimatedDeliveryDate = addDays(new Date(), ESTIMATED_DAYS_DELIVERY);
 
@@ -141,6 +142,8 @@ export const CreateRazorpayOrder = async (req, res) => {
   let deliverTo;
   let orderItems;
   let total;
+  let subtotal = 0;
+  let shippingCharge = 0;
   let testMode = false;
 
   // const { error } = CreateRazorpayOrderValidator.validate(body);
@@ -163,14 +166,14 @@ export const CreateRazorpayOrder = async (req, res) => {
           quantityByProduct[productId] = (quantityByProduct[productId] || 0) + quantity;
         }
         const itemsList = [];
-        let subtotal = 0;
+        let itemsSubtotal = 0;
         for (const productId of Object.keys(quantityByProduct)) {
           const product = productMap[productId];
           const quantity = quantityByProduct[productId];
           const pricePerItem = product.salePrice != null ? product.salePrice : product.price;
           const originalPrice = product.salePrice != null ? product.price : null;
           const totalForItem = pricePerItem * quantity;
-          subtotal += totalForItem;
+          itemsSubtotal += totalForItem;
           itemsList.push({
             product: product._id,
             productName: product.name,
@@ -180,7 +183,8 @@ export const CreateRazorpayOrder = async (req, res) => {
             totalForItem,
           });
         }
-        const shippingCharge = 0;
+        subtotal = itemsSubtotal;
+        shippingCharge = await getShippingChargeForItems(items, address.pincode, false);
         total = subtotal + shippingCharge;
         orderItems = itemsList;
         deliverTo = {
@@ -200,6 +204,8 @@ export const CreateRazorpayOrder = async (req, res) => {
 
   if (testMode) {
     total = TEST_AMOUNT_INR;
+    subtotal = total;
+    shippingCharge = 0;
     deliverTo = {
       fullName: "Test User",
       addressLine1: "Test Address",
@@ -234,8 +240,8 @@ export const CreateRazorpayOrder = async (req, res) => {
       placedAt: new Date(),
       deliverTo,
       items: orderItems,
-      subtotal: total,
-      shippingCharge: 0,
+      subtotal,
+      shippingCharge,
       total,
       estimatedDeliveryDate,
     });

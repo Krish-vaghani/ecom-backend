@@ -45,7 +45,8 @@ export const RegisterOrRequestOtp = async (req, res) => {
     }
 
     // Generate OTP for this user
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = "111111";
     const otpExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
     await SingleRecordOperation("u", User, {

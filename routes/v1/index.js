@@ -17,6 +17,7 @@ import {
   ListMyOrders,
   GetOrderDetails,
 } from "../../controller/Order.js";
+import { CheckServiceability, TrackShipment } from "../../controller/Shipping.js";
 import { AddToCart, UpdateCartItem, RemoveFromCart, GetCart } from "../../controller/Cart.js";
 import {
   AddToWishlist,
@@ -71,5 +72,9 @@ router.post("/v1/order/create-razorpay-order", Authorization, CreateRazorpayOrde
 router.post("/v1/order/verify-razorpay-payment", Authorization, VerifyRazorpayPayment);
 router.get("/v1/order/list", Authorization, ListMyOrders);
 router.get("/v1/order/:id", Authorization, GetOrderDetails);
+
+// Shipping (Shiprocket)
+router.get("/v1/shipping/check", CheckServiceability);
+router.get("/v1/shipping/track/:awbOrOrderId", TrackShipment);
 
 export default router;

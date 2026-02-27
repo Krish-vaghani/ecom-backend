@@ -114,6 +114,10 @@ Common: title, subtitle, description, order, is_active, image, images.
    - `JWT_EXPIRES_IN` – e.g. `7d`
    - `RAZORPAY_KEY_ID` – Razorpay API key (for online payments)
    - `RAZORPAY_KEY_SECRET` – Razorpay API secret
+   - `SHIPROCKET_EMAIL` – Shiprocket API user email (Settings > API > Create API User)
+   - `SHIPROCKET_PASSWORD` – Shiprocket API user password
+   - `SHIPROCKET_PICKUP_POSTCODE` – Your warehouse/pickup pincode (for rate calculation)
+   - `SHIPROCKET_PICKUP_LOCATION` – Name of your saved pickup address in Shiprocket (default: "Default")
 
 ## Run
 
@@ -151,8 +155,22 @@ Common: title, subtitle, description, order, is_active, image, images.
 | POST   | /v1/order/verify-razorpay-payment | Yes | Verify payment after Checkout. Body: orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature |
 | GET    | /v1/order/list | Yes | List my orders (?page, limit, status) |
 | GET    | /v1/order/:id | Yes | Get order details |
+| GET    | /v1/shipping/check | No | Check serviceability & rates. Query: pincode, weight?, cod? |
+| GET    | /v1/shipping/track/:awbOrOrderId | No | Track shipment by AWB or order ID |
+| POST   | /admin/order/:id/create-shipment | Admin | Create Shiprocket order, assign AWB, mark as shipped |
+| POST   | /admin/order/:id/generate-label | Admin | Generate shipping label PDF URL |
+| POST   | /admin/order/:id/request-pickup | Admin | Request pickup for shipment |
 
 Protected routes use header: `Authorization: Bearer <token>`.
+
+### Shiprocket shipping flow
+
+1. **Create API user** in Shiprocket dashboard: Settings > API > Configure > Create API User (use email not registered on Shiprocket).
+2. **Add pickup address** in Shiprocket: Settings > Pickup Address. Add your warehouse address.
+3. **Set env vars** `SHIPROCKET_EMAIL`, `SHIPROCKET_PASSWORD`, `SHIPROCKET_PICKUP_POSTCODE` (your warehouse pincode).
+4. **Shipping rates** are calculated automatically when placing orders (via pincode serviceability).
+5. **When ready to ship** (admin): `POST /api/admin/order/:id/create-shipment` – creates order in Shiprocket, assigns AWB, updates status to shipped.
+6. **Generate label** and **request pickup** via admin endpoints.
 
 ### Razorpay payment flow
 
