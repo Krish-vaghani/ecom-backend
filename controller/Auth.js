@@ -1,12 +1,32 @@
 import User from "../models/User.js";
-import Product from "../models/Product.js";
+import OtpAttempt from "../models/OtpAttempt.js";
 import {
-  AuthRegisterValidator,
   AuthLoginRequestValidator,
   AuthLoginVerifyValidator,
 } from "../validators/Auth.js";
 import { FindOne, SingleRecordOperation } from "../helper/commonquery.js";
 import { GenerateToken } from "../helper/helper.js";
+import { sendOtpSms } from "../connection/twilio.js";
+
+const MAX_SMS_PER_DAY = 5;
+
+/** Get YYYY-MM-DD for today in UTC */
+function getTodayDateString() {
+  const now = new Date();
+  return now.toISOString().slice(0, 10);
+}
+
+/** Ensure phone is E.164 (e.g. +919876543210) for Twilio */
+function toE164(phone) {
+  const digits = String(phone).replace(/\D/g, "");
+  if (digits.length === 10 && digits.startsWith("6") === false) {
+    return "+91" + digits;
+  }
+  if (digits.length === 12 && digits.startsWith("91")) {
+    return "+" + digits;
+  }
+  return phone.startsWith("+") ? phone : "+" + digits;
+}
 
 // Single endpoint: if user exists -> send OTP; if not -> register and send OTP
 export const RegisterOrRequestOtp = async (req, res) => {
@@ -44,10 +64,34 @@ export const RegisterOrRequestOtp = async (req, res) => {
       isNewUser = true;
     }
 
-    // Generate OTP for this user
-    // const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otp = "111111";
+    const today = getTodayDateString();
+    let attemptDoc = await OtpAttempt.findOne({ phone, date: today }).lean();
+    const currentCount = attemptDoc ? attemptDoc.count : 0;
+    if (currentCount >= MAX_SMS_PER_DAY) {
+      return res.status(429).json({
+        message: "Maximum OTP limit reached. You can request only 5 OTPs per day. Try again tomorrow.",
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+    const e164Phone = toE164(phone);
+    try {
+      await sendOtpSms(e164Phone, otp);
+    } catch (smsErr) {
+      console.error("Twilio SMS error:", smsErr.message);
+      return res.status(503).json({
+        message: "Unable to send OTP. Please try again later.",
+        error: process.env.NODE_ENV !== "production" ? smsErr.message : undefined,
+      });
+    }
+
+    await OtpAttempt.findOneAndUpdate(
+      { phone, date: today },
+      { $inc: { count: 1 } },
+      { upsert: true, new: true }
+    );
 
     await SingleRecordOperation("u", User, {
       _id: user._id,
@@ -55,13 +99,13 @@ export const RegisterOrRequestOtp = async (req, res) => {
       otpExpires,
     });
 
-    // NOTE: In production, send OTP via SMS provider instead of returning it.
+    const isDev = process.env.NODE_ENV !== "production";
     return res.status(200).json({
       message: isNewUser ? "Registered and OTP sent." : "OTP sent successfully.",
       data: {
         phone,
         isNewUser,
-        otp, // for development/testing only
+        ...(isDev && { otp }),
         expiresInMinutes: 5,
       },
     });
