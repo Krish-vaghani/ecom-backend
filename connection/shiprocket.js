@@ -7,8 +7,8 @@ const TOKEN_VALIDITY_MS = 9 * 24 * 60 * 60 * 1000; // 9 days (refresh before 10-
 let cachedToken = null;
 let tokenFetchedAt = null;
 
-const email = "shashankparmar352@gmail.com";
-const password = "U#2OIUjk3UQjaf87j^$!0ZXqa^1nfDX4";
+const email = "krishvaghani3800@gmail.com";
+const password = "ap&ebQXX@khfl*aAY4*xtbXNgM&8M@ay";
 const pickupPostcode = "394101";
 const pickupLocation = "Mota varachha surat";
 
