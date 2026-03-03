@@ -9,8 +9,8 @@ let tokenFetchedAt = null;
 
 const email = "krishvaghani3800@gmail.com";
 const password = "ap&ebQXX@khfl*aAY4*xtbXNgM&8M@ay";
-const pickupPostcode = "394101";
-const pickupLocation = "Mota varachha surat";
+const pickupPostcode = "400092";
+const pickupLocation = "mumbai, maharashtra, India";
 
 function isConfigured() {
   return !!(email && password && pickupPostcode);
