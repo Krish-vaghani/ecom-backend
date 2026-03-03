@@ -1,946 +1,799 @@
 {
   "info": {
-    "name": "E-commerce API",
-    "description": "Complete API collection (folder-wise).\n\n**User auth:** Register or Request OTP → Verify OTP (Login). **Admin auth:** Admin Login (email + password). Token saved to `{{token}}`.\n\n**v1 - Cart:** Add/Update/Remove/Get cart (uses {{product_id}}). **v1 - Wishlist:** Add/Remove/List/Check wishlist (whitelisted products).\n\n**Variables:** base_url, token, phone, otp, product_id, section_id, testimonial_id, address_id, order_id, orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature (Razorpay).",
+    "name": "Ecommerce API",
+    "description": "Full API collection for ecom-backend: v1 (customer) and admin endpoints.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base_url", "value": "http://localhost:3000" },
+    { "key": "baseUrl", "value": "http://localhost:3000" },
     { "key": "token", "value": "" },
-    { "key": "phone", "value": "+1234567890" },
-    { "key": "otp", "value": "" },
-    { "key": "product_id", "value": "" },
-    { "key": "section_id", "value": "" },
-    { "key": "testimonial_id", "value": "" },
-    { "key": "address_id", "value": "" },
-    { "key": "order_id", "value": "" },
-    { "key": "orderId", "value": "" },
-    { "key": "razorpay_order_id", "value": "" },
-    { "key": "razorpay_payment_id", "value": "" },
-    { "key": "razorpay_signature", "value": "" }
+    { "key": "adminToken", "value": "" }
   ],
   "item": [
     {
       "name": "Health",
-      "item": [
-        {
-          "name": "Health Check",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{base_url}}/health",
-            "description": "Check if API is running."
-          }
-        }
-      ]
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health",
+        "description": "Check API is running."
+      }
     },
     {
-      "name": "v1 - Auth",
+      "name": "Auth",
       "item": [
         {
           "name": "Register or Request OTP",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.data && json.data.otp) {",
-                  "    pm.collectionVariables.set('otp', json.data.otp);",
-                  "  }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"John Doe\",\n  \"phone\": \"{{phone}}\"\n}"
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"phone\": \"9876543210\"\n}"
             },
-            "url": "{{base_url}}/api/v1/auth/register-or-login",
-            "description": "If user exists: sends OTP. If new: name + phone, then OTP. In dev, response may include otp (saved to {{otp}})."
+            "url": "{{baseUrl}}/api/v1/auth/register-or-login",
+            "description": "New user: register and send OTP. Existing: send OTP. Phone required; name required."
           }
         },
         {
-          "name": "Verify OTP (Login)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.data && json.data.token) {",
-                  "    pm.collectionVariables.set('token', json.data.token);",
-                  "  }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Login (Verify OTP)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"otp\": \"{{otp}}\"\n}"
+              "raw": "{\n  \"phone\": \"9876543210\",\n  \"otp\": \"123456\",\n  \"cartItems\": [{ \"productId\": \"\", \"quantity\": 1 }],\n  \"wishlist\": []\n}"
             },
-            "url": "{{base_url}}/api/v1/auth/login",
-            "description": "Verify OTP and get JWT. Saves token to {{token}} for Admin requests."
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "description": "Verify OTP; returns JWT. Optional: cartItems, wishlist to merge with user."
           }
         }
       ]
     },
     {
-      "name": "v1 - Product",
+      "name": "Product",
       "item": [
         {
           "name": "List Products",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.data && json.data.length > 0) {",
-                  "    pm.collectionVariables.set('product_id', json.data[0]._id);",
-                  "  }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/product/list?page=1&limit=10",
-              "host": ["{{base_url}}"],
+              "raw": "{{baseUrl}}/api/v1/product/list?page=1&limit=10&category=jwellery&tag=bestseller",
+              "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "product", "list"],
               "query": [
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "10" },
-                { "key": "category", "value": "purse", "disabled": true, "description": "jwellery | purse" },
-                { "key": "tag", "value": "bestseller", "disabled": true, "description": "bestseller | hot | trending | sale" }
+                { "key": "category", "value": "jwellery", "description": "jwellery | purse" },
+                { "key": "tag", "value": "bestseller", "description": "bestseller | hot | trending | sale" }
               ]
-            },
-            "description": "List active products. Optional: category, tag, page, limit. Saves first product _id to {{product_id}}."
+            }
           }
         },
         {
           "name": "Get Product Detail",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/product/detail/{{product_id}}?reviewPage=1&reviewLimit=10",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "product", "detail", "{{product_id}}"],
+              "raw": "{{baseUrl}}/api/v1/product/detail/:id?reviewPage=1&reviewLimit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "product", "detail", ":id"],
+              "variable": [{ "key": "id", "value": "" }],
               "query": [
-                { "key": "reviewPage", "value": "1", "description": "Reviews pagination page" },
-                { "key": "reviewLimit", "value": "10", "description": "Reviews per page" }
+                { "key": "reviewPage", "value": "1" },
+                { "key": "reviewLimit", "value": "10" }
               ]
-            },
-            "description": "Get full product detail by id: name, shortDescription, description, price, salePrice, currentPrice, savings, dimensions, images, colorVariants, averageRating, numberOfReviews, starBreakdown (1-5), and paginated reviews. Use ?slug=xxx instead of path id to fetch by slug."
+            }
           }
         },
         {
           "name": "Increment Product View",
           "request": {
             "method": "POST",
-            "header": [],
-            "url": "{{base_url}}/api/v1/product/{{product_id}}/view",
-            "description": "Increment view count for a product. Call when user opens product detail. Uses {{product_id}}."
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/product/:id/view",
+            "description": "Call when user views product detail. Path :id = productId."
           }
         }
       ]
     },
     {
-      "name": "v1 - Landing",
+      "name": "Landing",
       "item": [
         {
-          "name": "Get All Landing Page Data",
+          "name": "Get All Landing Data",
           "request": {
             "method": "GET",
-            "header": [],
-            "url": "{{base_url}}/api/v1/landing",
-            "description": "Returns all active landing sections keyed by sectionKey (hero, best_collections, find_perfect_purse, etc.)."
+            "url": "{{baseUrl}}/api/v1/landing"
           }
         }
       ]
     },
     {
-      "name": "v1 - Testimonials",
+      "name": "Testimonial",
       "item": [
         {
-          "name": "List Testimonials (active only)",
+          "name": "List Active Testimonials",
           "request": {
             "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/v1/testimonial/list?limit=10",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "testimonial", "list"],
-              "query": [{ "key": "limit", "value": "10" }]
-            },
-            "description": "Returns only active testimonials for public display."
+            "url": "{{baseUrl}}/api/v1/testimonial/list"
           }
         }
       ]
     },
     {
-      "name": "v1 - Addresses",
+      "name": "Address",
       "item": [
         {
           "name": "Add Address",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.data && json.data._id) {",
-                  "    pm.collectionVariables.set('address_id', json.data._id);",
-                  "  }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"address_type\": \"Home\",\n  \"full_name\": \"Priya Sharma\",\n  \"mobile_number\": \"9876543210\",\n  \"email_address\": \"priya@example.com\",\n  \"address_line_1\": \"House No. 12, Street Name, Area\",\n  \"address_line_2\": \"Apartment 5, Floor 2\",\n  \"pincode\": \"400001\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"landmark\": \"Near metro station\",\n  \"is_default\": true\n}"
+              "raw": "{\n  \"address_type\": \"Home\",\n  \"full_name\": \"John Doe\",\n  \"mobile_number\": \"9876543210\",\n  \"email_address\": \"john@example.com\",\n  \"address_line_1\": \"123 Main St\",\n  \"address_line_2\": \"Apt 4\",\n  \"pincode\": \"110001\",\n  \"city\": \"New Delhi\",\n  \"state\": \"Delhi\",\n  \"landmark\": \"Near park\",\n  \"is_default\": true\n}"
             },
-            "url": "{{base_url}}/api/v1/address/add",
-            "description": "Add delivery address. Requires login (Bearer token). address_type: Home | Office | Other."
+            "url": "{{baseUrl}}/api/v1/address/add",
+            "description": "address_type: Home | Office | Other"
           }
         },
         {
           "name": "List Addresses",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.data && json.data.length > 0) {",
-                  "    pm.collectionVariables.set('address_id', json.data[0]._id);",
-                  "  }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "GET",
-            "header": [],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": {
-              "raw": "{{base_url}}/api/v1/address/list?page=1&limit=20",
-              "host": ["{{base_url}}"],
+              "raw": "{{baseUrl}}/api/v1/address/list?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "address", "list"],
               "query": [
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "20" }
               ]
-            },
-            "description": "List current user's addresses. Requires login."
+            }
           }
         },
         {
           "name": "Get Address",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "GET",
-            "header": [],
-            "url": "{{base_url}}/api/v1/address/{{address_id}}",
-            "description": "Get one address by id. Requires login."
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/address/:id"
           }
         },
         {
           "name": "Update Address",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"full_name\": \"Priya Sharma Updated\",\n  \"address_line_1\": \"New House No., New Street\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"pincode\": \"400002\",\n  \"is_default\": true\n}"
+              "raw": "{\n  \"full_name\": \"John Doe\",\n  \"pincode\": \"110002\",\n  \"is_default\": true\n}"
             },
-            "url": "{{base_url}}/api/v1/address/update/{{address_id}}",
-            "description": "Update address. Set address_id from List or Add response."
+            "url": "{{baseUrl}}/api/v1/address/update/:id"
           }
         },
         {
           "name": "Delete Address",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "DELETE",
-            "header": [],
-            "url": "{{base_url}}/api/v1/address/delete/{{address_id}}",
-            "description": "Delete address. Requires login."
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/address/delete/:id"
           }
         }
       ]
     },
     {
-      "name": "v1 - Cart",
+      "name": "Cart",
       "item": [
         {
           "name": "Add to Cart",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"productId\": \"{{product_id}}\",\n  \"quantity\": 1\n}" },
-            "url": "{{base_url}}/api/v1/cart/add",
-            "description": "Add product to cart (or increase quantity if already in cart). Requires login. Uses {{product_id}} from List Products."
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"\",\n  \"quantity\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/cart/add"
           }
         },
         {
           "name": "Update Cart Item",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"productId\": \"{{product_id}}\",\n  \"quantity\": 2\n}" },
-            "url": "{{base_url}}/api/v1/cart/update",
-            "description": "Update quantity for a product in cart. Requires login."
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"\",\n  \"quantity\": 2\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/cart/update"
           }
         },
         {
           "name": "Remove from Cart",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "DELETE",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"productId\": \"{{product_id}}\"\n}" },
-            "url": "{{base_url}}/api/v1/cart/remove",
-            "description": "Remove product from cart. Requires login."
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/cart/remove"
           }
         },
         {
           "name": "Get Cart",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "GET",
-            "header": [],
-            "url": "{{base_url}}/api/v1/cart",
-            "description": "Get current user's cart with product details. Requires login."
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/cart"
           }
         }
       ]
     },
     {
-      "name": "v1 - Wishlist",
+      "name": "Wishlist",
       "item": [
         {
           "name": "Add to Wishlist",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"productId\": \"{{product_id}}\"\n}" },
-            "url": "{{base_url}}/api/v1/wishlist/add",
-            "description": "Add product to wishlist (whitelisted). Requires login. Uses {{product_id}} from List Products."
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/wishlist/add"
           }
         },
         {
           "name": "Remove from Wishlist",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "DELETE",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"productId\": \"{{product_id}}\"\n}" },
-            "url": "{{base_url}}/api/v1/wishlist/remove",
-            "description": "Remove product from wishlist. Requires login."
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/wishlist/remove"
           }
         },
         {
           "name": "List Wishlist",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "GET",
-            "header": [],
-            "url": "{{base_url}}/api/v1/wishlist",
-            "description": "List all wishlisted products. Requires login."
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/wishlist"
           }
         },
         {
           "name": "Check Wishlist",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "GET",
-            "header": [],
-            "url": "{{base_url}}/api/v1/wishlist/check/{{product_id}}",
-            "description": "Check if a product is in wishlist. Returns { productId, inWishlist }. Requires login."
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/wishlist/check/:productId"
           }
         }
       ]
     },
     {
-      "name": "v1 - Orders",
+      "name": "Order",
       "item": [
         {
           "name": "Place Order (COD)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.data && json.data._id) {",
-                  "    pm.collectionVariables.set('order_id', json.data._id);",
-                  "  }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"addressId\": \"{{address_id}}\",\n  \"items\": [\n    { \"productId\": \"{{product_id}}\", \"quantity\": 2 }\n  ]\n}"
+              "raw": "{\n  \"addressId\": \"\",\n  \"items\": [\n    { \"productId\": \"\", \"quantity\": 1 }\n  ]\n}"
             },
-            "url": "{{base_url}}/api/v1/order/place",
-            "description": "Place order with Cash on Delivery. Requires login. Use address_id and product_id from List Addresses / List Products."
+            "url": "{{baseUrl}}/api/v1/order/place"
           }
         },
         {
           "name": "Create Razorpay Order",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.data && json.data.order) {",
-                  "    pm.collectionVariables.set('order_id', json.data.order._id);",
-                  "    pm.collectionVariables.set('orderId', json.data.order.orderId);",
-                  "  }",
-                  "  if (json.data && json.data.razorpayOrderId) {",
-                  "    pm.collectionVariables.set('razorpay_order_id', json.data.razorpayOrderId);",
-                  "  }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"addressId\": \"{{address_id}}\",\n  \"items\": [\n    { \"productId\": \"{{product_id}}\", \"quantity\": 2 }\n  ]\n}"
+              "raw": "{\n  \"addressId\": \"\",\n  \"items\": [\n    { \"productId\": \"\", \"quantity\": 1 }\n  ]\n}"
             },
-            "url": "{{base_url}}/api/v1/order/create-razorpay-order",
-            "description": "Create order with Razorpay. Returns order, razorpayOrderId, key_id, amount, currency. Use key_id and razorpayOrderId in frontend Checkout. After payment, call Verify Razorpay Payment with razorpay_order_id, razorpay_payment_id, razorpay_signature from Checkout success."
+            "url": "{{baseUrl}}/api/v1/order/create-razorpay-order"
           }
         },
         {
           "name": "Verify Razorpay Payment",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"razorpay_order_id\": \"{{razorpay_order_id}}\",\n  \"razorpay_payment_id\": \"{{razorpay_payment_id}}\",\n  \"razorpay_signature\": \"{{razorpay_signature}}\"\n}"
+              "raw": "{\n  \"orderId\": \"\",\n  \"razorpay_order_id\": \"\",\n  \"razorpay_payment_id\": \"\",\n  \"razorpay_signature\": \"\"\n}"
             },
-            "url": "{{base_url}}/api/v1/order/verify-razorpay-payment",
-            "description": "Verify payment after Razorpay Checkout success. Run Create Razorpay Order first (sets orderId, razorpay_order_id). Paste razorpay_payment_id and razorpay_signature from frontend Checkout success handler into collection variables, then send."
+            "url": "{{baseUrl}}/api/v1/order/verify-razorpay-payment"
           }
         },
         {
           "name": "List My Orders",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.data && json.data.length > 0) {",
-                  "    pm.collectionVariables.set('order_id', json.data[0]._id);",
-                  "  }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "GET",
-            "header": [],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": {
-              "raw": "{{base_url}}/api/v1/order/list?page=1&limit=10",
-              "host": ["{{base_url}}"],
+              "raw": "{{baseUrl}}/api/v1/order/list?page=1&limit=10&status=order_placed",
+              "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "order", "list"],
               "query": [
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "10" },
-                { "key": "status", "value": "confirmed", "disabled": true }
+                { "key": "status", "value": "order_placed" }
               ]
-            },
-            "description": "List current user's orders. Optional query: status (order_placed, confirmed, shipped, out_for_delivery, delivered)."
+            }
           }
         },
         {
           "name": "Get Order Details",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "GET",
-            "header": [],
-            "url": "{{base_url}}/api/v1/order/{{order_id}}",
-            "description": "Get single order details (tracking, deliverTo, items, totals). Uses {{order_id}}."
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/order/:id"
           }
         }
       ]
     },
     {
-      "name": "Admin - Auth",
+      "name": "Shipping",
       "item": [
         {
-          "name": "Admin Login",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.data && json.data.token) {",
-                  "    pm.collectionVariables.set('token', json.data.token);",
-                  "  }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Check Serviceability",
           "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"your_password\"\n}"
-            },
-            "url": "{{base_url}}/api/admin/auth/login",
-            "description": "Admin login with email and password. Saves token to {{token}} for other Admin requests."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Admin - Upload",
-      "item": [
-        {
-          "name": "Upload Image",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "formdata",
-              "formdata": [{ "key": "image", "type": "file", "src": [], "description": "Field name must be 'image'" }]
-            },
-            "url": "{{base_url}}/api/admin/upload/image",
-            "description": "Upload image (e.g. S3). Use returned imageUrl in product/landing/testimonial bodies."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Admin - Product",
-      "item": [
-        {
-          "name": "Add Product",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Tiny Micro Bag\",\n  \"slug\": \"tiny-micro-bag\",\n  \"description\": \"Premium micro bag\",\n  \"category\": \"purse\",\n  \"price\": 125,\n  \"salePrice\": 99,\n  \"image\": \"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=800&auto=format&fit=crop\",\n  \"tags\": [\"bestseller\", \"sale\"],\n  \"colorVariants\": [\n    { \"colorCode\": \"#000000\", \"images\": [\"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=800\"] },\n    { \"colorCode\": \"#FFC0CB\", \"images\": [\"https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800\"] }\n  ],\n  \"numberOfReviews\": 83\n}"
-            },
-            "url": "{{base_url}}/api/admin/product/add",
-            "description": "Create product. Required: name, slug, price, category (jwellery|purse). Optional: description, salePrice, image, tags, colorVariants, numberOfReviews."
-          }
-        },
-        {
-          "name": "Update Product",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Tiny Micro Bag Updated\",\n  \"category\": \"purse\",\n  \"price\": 120,\n  \"tags\": [\"bestseller\", \"hot\"]\n}"
-            },
-            "url": "{{base_url}}/api/admin/product/update/{{product_id}}",
-            "description": "Update product. Set product_id from List Products or Add Product response."
-          }
-        },
-        {
-          "name": "Delete Product",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "DELETE",
-            "header": [],
-            "url": "{{base_url}}/api/admin/product/delete/{{product_id}}",
-            "description": "Soft delete product (sets is_active: false)."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Admin - Testimonials",
-      "item": [
-        {
-          "name": "Add Testimonial",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.data && json.data._id) {",
-                  "    pm.collectionVariables.set('testimonial_id', json.data._id);",
-                  "  }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"message\": \"Amazing quality and fast delivery. Will order again!\",\n  \"review\": 5,\n  \"user_name\": \"Jane Smith\",\n  \"user_address\": \"New York, USA\",\n  \"user_image\": \"https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop\"\n}"
-            },
-            "url": "{{base_url}}/api/admin/testimonial/add",
-            "description": "Create testimonial. Required: message, review (1-5), user_name. Optional: user_address, user_image."
-          }
-        },
-        {
-          "name": "List Testimonials",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.data && json.data.length > 0) {",
-                  "    pm.collectionVariables.set('testimonial_id', json.data[0]._id);",
-                  "  }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/admin/testimonial/list?page=1&limit=10",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "testimonial", "list"],
+              "raw": "{{baseUrl}}/api/v1/shipping/check?pincode=110001&weight=0.5&cod=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shipping", "check"],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" }
+                { "key": "pincode", "value": "110001" },
+                { "key": "weight", "value": "0.5" },
+                { "key": "cod", "value": "1" }
               ]
-            },
-            "description": "List all testimonials (paginated). Saves first _id to {{testimonial_id}}."
+            }
           }
         },
         {
-          "name": "Update Testimonial",
+          "name": "Track Shipment",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"message\": \"Updated review text.\",\n  \"review\": 4,\n  \"user_name\": \"Jane Smith\",\n  \"user_address\": \"Brooklyn, NY\"\n}"
-            },
-            "url": "{{base_url}}/api/admin/testimonial/update/{{testimonial_id}}",
-            "description": "Update testimonial. Set testimonial_id from List or Add response."
-          }
-        },
-        {
-          "name": "Delete Testimonial",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "DELETE",
-            "header": [],
-            "url": "{{base_url}}/api/admin/testimonial/delete/{{testimonial_id}}",
-            "description": "Soft delete testimonial (sets is_active: false)."
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/shipping/track/:awbOrOrderId",
+            "description": "Pass AWB code or order ID"
           }
         }
       ]
     },
     {
-      "name": "Admin - Orders",
+      "name": "Admin",
       "item": [
         {
-          "name": "List All Orders",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/admin/order/list?page=1&limit=20",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "order", "list"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" },
-                { "key": "status", "value": "confirmed", "disabled": true }
-              ]
-            },
-            "description": "List all orders. Optional: status."
-          }
-        },
-        {
-          "name": "Get Order Details (Admin)",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "GET",
-            "header": [],
-            "url": "{{base_url}}/api/admin/order/{{order_id}}",
-            "description": "Get order details. Set order_id."
-          }
-        },
-        {
-          "name": "Update Order Status",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"confirmed\"\n}"
-            },
-            "url": "{{base_url}}/api/admin/order/update-status/{{order_id}}",
-            "description": "Update order status: order_placed | confirmed | shipped | out_for_delivery | delivered."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Admin - Landing",
-      "item": [
-        {
-          "name": "Get All Landing Page Data",
-          "event": [
+          "name": "Admin Auth",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.data && json.data.hero && json.data.hero._id) {",
-                  "    pm.collectionVariables.set('section_id', json.data.hero._id);",
-                  "  }",
-                  "}"
-                ],
-                "type": "text/javascript"
+              "name": "Admin Login",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"yourpassword\"\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/auth/login",
+                "description": "Returns admin token. Use in Authorization: Bearer {{adminToken}} for other admin requests."
               }
             }
-          ],
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "GET",
-            "header": [],
-            "url": "{{base_url}}/api/admin/landing",
-            "description": "Returns all landing sections. Use section _id for Update Section. Saves hero _id to {{section_id}}."
-          }
+          ]
         },
         {
-          "name": "Update Section by ID",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"order\": 1,\n  \"is_active\": true,\n  \"images\": [\"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=1200\"],\n  \"price\": 99,\n  \"originalPrice\": 120\n}"
-            },
-            "url": "{{base_url}}/api/admin/landing/section/update/{{section_id}}",
-            "description": "Generic update by section _id. Set section_id from Get All Landing Page Data."
-          }
+          "name": "Admin Upload",
+          "item": [
+            {
+              "name": "Upload Image",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    { "key": "image", "type": "file", "src": "", "description": "Image file" }
+                  ]
+                },
+                "url": "{{baseUrl}}/api/admin/upload/image",
+                "description": "Field name must be 'image'. S3 upload."
+              }
+            }
+          ]
         },
         {
-          "name": "Hero - Create",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"images\": [\"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=1200\"],\n  \"price\": null,\n  \"rating\": null,\n  \"numberOfReviews\": 0\n}"
+          "name": "Admin Product",
+          "item": [
+            {
+              "name": "Add Product",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Product Name\",\n  \"slug\": \"product-slug\",\n  \"description\": \"\",\n  \"price\": 999,\n  \"salePrice\": null,\n  \"category\": \"jwellery\",\n  \"image\": null,\n  \"tags\": [\"bestseller\"],\n  \"colorVariants\": [],\n  \"shortDescription\": \"\",\n  \"dimensions\": { \"heightCm\": 10, \"widthCm\": 5, \"depthCm\": 2 },\n  \"averageRating\": 0,\n  \"numberOfReviews\": 0,\n  \"isFeatured\": false,\n  \"is_active\": true\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/product/add",
+                "description": "category: jwellery | purse; tags: bestseller | hot | trending | sale"
+              }
             },
-            "url": "{{base_url}}/api/admin/landing/hero",
-            "description": "Create hero section. Optional: images, price, rating, numberOfReviews."
-          }
+            {
+              "name": "Update Product",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Updated Name\",\n  \"price\": 899\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/product/update/:id"
+              }
+            },
+            {
+              "name": "Delete Product",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+                "url": "{{baseUrl}}/api/admin/product/delete/:id",
+                "description": "Soft delete (is_active: false)"
+              }
+            }
+          ]
         },
         {
-          "name": "Hero - Update",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"images\": [\"https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=1200\"],\n  \"price\": 99,\n  \"rating\": 4.5,\n  \"numberOfReviews\": 42\n}"
+          "name": "Admin Testimonial",
+          "item": [
+            {
+              "name": "Add Testimonial",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"message\": \"Great product!\",\n  \"review\": 5,\n  \"user_name\": \"Jane Doe\",\n  \"user_image\": null,\n  \"user_address\": \"Mumbai\",\n  \"is_active\": true\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/testimonial/add"
+              }
             },
-            "url": "{{base_url}}/api/admin/landing/hero",
-            "description": "Update hero section."
-          }
+            {
+              "name": "List Testimonials",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/testimonial/list?page=1&limit=50",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "admin", "testimonial", "list"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "50" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Update Testimonial",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"review\": 4,\n  \"is_active\": true\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/testimonial/update/:id"
+              }
+            },
+            {
+              "name": "Delete Testimonial",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+                "url": "{{baseUrl}}/api/admin/testimonial/delete/:id"
+              }
+            }
+          ]
         },
         {
-          "name": "Best Collections - Create",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"order\": 1,\n  \"is_active\": true,\n  \"images\": [\"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=800\"],\n  \"price\": 99,\n  \"originalPrice\": 120,\n  \"rating\": 4.5,\n  \"numberOfReviews\": 20,\n  \"tags\": [\"bestseller\", \"sale\"],\n  \"colors\": [\n    { \"colorCode\": \"#000\", \"images\": \"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=400\" },\n    { \"colorCode\": \"#fff\", \"images\": \"https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400\" }\n  ]\n}"
+          "name": "Admin Order",
+          "item": [
+            {
+              "name": "List Orders",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/order/list?page=1&limit=20&status=order_placed",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "admin", "order", "list"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "20" },
+                    { "key": "status", "value": "order_placed" }
+                  ]
+                }
+              }
             },
-            "url": "{{base_url}}/api/admin/landing/best-collections",
-            "description": "Create best_collections section. Optional: order, is_active, images, price, originalPrice, rating, numberOfReviews, tags, colors."
-          }
+            {
+              "name": "Get Order Details",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+                "url": "{{baseUrl}}/api/admin/order/:id"
+              }
+            },
+            {
+              "name": "Update Order Status",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"confirmed\"\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/order/update-status/:id",
+                "description": "status: order_placed | confirmed | shipped | out_for_delivery | delivered"
+              }
+            },
+            {
+              "name": "Create Shipment",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+                "url": "{{baseUrl}}/api/admin/order/:id/create-shipment",
+                "description": "Shiprocket: create order and assign AWB"
+              }
+            },
+            {
+              "name": "Generate Label",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+                "url": "{{baseUrl}}/api/admin/order/:id/generate-label"
+              }
+            },
+            {
+              "name": "Request Pickup",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+                "url": "{{baseUrl}}/api/admin/order/:id/request-pickup"
+              }
+            }
+          ]
         },
         {
-          "name": "Best Collections - Update",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"order\": 2,\n  \"images\": [\"https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800\"],\n  \"price\": 89,\n  \"tags\": [\"hot\", \"trending\"]\n}"
+          "name": "Admin Landing",
+          "item": [
+            {
+              "name": "Get Landing Data",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+                "url": "{{baseUrl}}/api/admin/landing"
+              }
             },
-            "url": "{{base_url}}/api/admin/landing/best-collections",
-            "description": "Update best_collections section."
-          }
-        },
-        {
-          "name": "Find Perfect Purse - Create",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"image\": \"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=800&auto=format&fit=crop\",\n  \"order\": 2\n}"
+            {
+              "name": "Update Section",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"\",\n  \"subtitle\": \"\",\n  \"order\": 0,\n  \"is_active\": true\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/landing/section/update/:id"
+              }
             },
-            "url": "{{base_url}}/api/admin/landing/find-perfect-purse",
-            "description": "Create find_perfect_purse section. Optional: image, order."
-          }
-        },
-        {
-          "name": "Find Perfect Purse - Update",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"image\": \"https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&auto=format&fit=crop\",\n  \"order\": 3\n}"
+            {
+              "name": "Create Hero Section",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"images\": [],\n  \"price\": null,\n  \"numberOfReviews\": 0,\n  \"rating\": null\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/landing/hero"
+              }
             },
-            "url": "{{base_url}}/api/admin/landing/find-perfect-purse",
-            "description": "Update find_perfect_purse section."
-          }
-        },
-        {
-          "name": "Elevate Look - Create",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"image\": \"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=800\",\n  \"order\": 3\n}"
+            {
+              "name": "Update Hero Section",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"images\": [],\n  \"price\": null,\n  \"rating\": 5\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/landing/hero"
+              }
             },
-            "url": "{{base_url}}/api/admin/landing/elevate-look",
-            "description": "Create elevate_look section. Optional: image, order."
-          }
-        },
-        {
-          "name": "Elevate Look - Update",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"image\": \"https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800\",\n  \"order\": 4\n}"
+            {
+              "name": "Create Best Collections Section",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"order\": 0,\n  \"is_active\": true,\n  \"images\": [],\n  \"price\": null,\n  \"originalPrice\": null,\n  \"rating\": null,\n  \"numberOfReviews\": 0,\n  \"tags\": [],\n  \"colors\": []\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/landing/best-collections"
+              }
             },
-            "url": "{{base_url}}/api/admin/landing/elevate-look",
-            "description": "Update elevate_look section."
-          }
-        },
-        {
-          "name": "Fresh Styles - Create",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"order\": 4,\n  \"is_active\": true,\n  \"images\": [\"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=800\"],\n  \"price\": 79,\n  \"originalPrice\": 99,\n  \"rating\": 4.2,\n  \"numberOfReviews\": 15,\n  \"tags\": [\"trending\"],\n  \"colors\": [\n    { \"colorCode\": \"#000\", \"images\": \"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=400\" }\n  ]\n}"
+            {
+              "name": "Update Best Collections Section",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"order\": 0,\n  \"is_active\": true\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/landing/best-collections"
+              }
             },
-            "url": "{{base_url}}/api/admin/landing/fresh-styles",
-            "description": "Create fresh_styles section. Same fields as best_collections."
-          }
-        },
-        {
-          "name": "Fresh Styles - Update",
-          "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"order\": 5,\n  \"price\": 69,\n  \"tags\": [\"sale\"]\n}"
+            {
+              "name": "Create Find Perfect Purse Section",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"image\": null,\n  \"order\": 0\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/landing/find-perfect-purse"
+              }
             },
-            "url": "{{base_url}}/api/admin/landing/fresh-styles",
-            "description": "Update fresh_styles section."
-          }
+            {
+              "name": "Update Find Perfect Purse Section",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"image\": \"\",\n  \"order\": 0\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/landing/find-perfect-purse"
+              }
+            },
+            {
+              "name": "Create Elevate Look Section",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"image\": null,\n  \"order\": 0\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/landing/elevate-look"
+              }
+            },
+            {
+              "name": "Update Elevate Look Section",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"image\": \"\",\n  \"order\": 0\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/landing/elevate-look"
+              }
+            },
+            {
+              "name": "Create Fresh Styles Section",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"order\": 0,\n  \"is_active\": true,\n  \"images\": [],\n  \"price\": null,\n  \"originalPrice\": null,\n  \"rating\": null,\n  \"numberOfReviews\": 0,\n  \"tags\": [],\n  \"colors\": []\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/landing/fresh-styles"
+              }
+            },
+            {
+              "name": "Update Fresh Styles Section",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"order\": 0,\n  \"is_active\": true\n}"
+                },
+                "url": "{{baseUrl}}/api/admin/landing/fresh-styles"
+              }
+            }
+          ]
         }
       ]
     }

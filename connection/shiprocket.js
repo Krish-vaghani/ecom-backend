@@ -7,10 +7,10 @@ const TOKEN_VALIDITY_MS = 9 * 24 * 60 * 60 * 1000; // 9 days (refresh before 10-
 let cachedToken = null;
 let tokenFetchedAt = null;
 
-const email = process.env.SHIPROCKET_EMAIL;
-const password = process.env.SHIPROCKET_PASSWORD;
-const pickupPostcode = process.env.SHIPROCKET_PICKUP_POSTCODE || "";
-const pickupLocation = process.env.SHIPROCKET_PICKUP_LOCATION || "Default";
+const email = "shashankp02004@gmail.com";
+const password = "Shashank@2004";
+const pickupPostcode = "394101";
+const pickupLocation = "Mota varachha surat";
 
 function isConfigured() {
   return !!(email && password && pickupPostcode);
