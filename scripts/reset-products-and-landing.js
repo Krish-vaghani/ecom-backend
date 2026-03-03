@@ -160,15 +160,27 @@ const USER_AVATARS = [
   "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
 ];
 
-const LANDING_SECTION_KEYS = [
-  "hero",
-  "best_collections",
-  "find_perfect_purse",
-  "elevate_look",
-  "fresh_styles",
-  "testimonials",
-  "crafted_confidence",
-];
+const LANDING_SECTION_KEYS = ["hero", "best_collections", "elevate_look", "fresh_styles"];
+const TAGS = ["bestseller", "hot", "trending", "sale"];
+
+function makeDummyLandingProduct(imageIndex) {
+  const idx = imageIndex % PURSE_IMAGES.length;
+  const price = Math.round(1999 + Math.random() * 3000);
+  const originalPrice = Math.round(price * (1.1 + Math.random() * 0.3));
+  return {
+    images: [PURSE_IMAGES[idx], PURSE_IMAGES[(idx + 1) % PURSE_IMAGES.length]],
+    price,
+    originalPrice,
+    rating: Math.round((4 + Math.random()) * 10) / 10,
+    numberOfReviews: 10 + Math.floor(Math.random() * 50),
+    tags: [TAGS[Math.floor(Math.random() * TAGS.length)]],
+    colors: [
+      { colorCode: "#8B4513", images: PURSE_IMAGES[idx] },
+      { colorCode: "#000000", images: PURSE_IMAGES[(idx + 2) % PURSE_IMAGES.length] },
+      { colorCode: "#DEB887", images: PURSE_IMAGES[(idx + 4) % PURSE_IMAGES.length] },
+    ],
+  };
+}
 
 function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -259,18 +271,40 @@ async function seedProductReviews(products) {
 }
 
 async function seedLandingSections() {
-  const sections = LANDING_SECTION_KEYS.map((sectionKey, idx) => ({
-    sectionKey,
-    order: idx,
-    is_active: true,
-    images: [PURSE_IMAGES[idx % PURSE_IMAGES.length]],
-    price: 1999 + idx * 100,
-    originalPrice: 2499 + idx * 100,
-    rating: 4 + Math.random(),
-    numberOfReviews: 10 + Math.floor(Math.random() * 40),
-    tags: idx % 2 === 0 ? ["bestseller"] : ["trending"],
-    colors: [{ colorCode: "#8B4513", images: PURSE_IMAGES[idx % PURSE_IMAGES.length] }],
-  }));
+  const bestCollectionsProducts = Array.from({ length: 6 }, (_, i) => makeDummyLandingProduct(i));
+  const elevateLookProducts = Array.from({ length: 4 }, (_, i) => makeDummyLandingProduct(i + 10));
+  const freshStylesProducts = Array.from({ length: 8 }, (_, i) => makeDummyLandingProduct(i + 20));
+
+  const sections = [
+    {
+      sectionKey: "hero",
+      order: 0,
+      is_active: true,
+      images: [PURSE_IMAGES[0], PURSE_IMAGES[1]],
+      price: 2499,
+      originalPrice: 2999,
+      rating: 4.5,
+      numberOfReviews: 42,
+    },
+    {
+      sectionKey: "best_collections",
+      order: 1,
+      is_active: true,
+      products: bestCollectionsProducts,
+    },
+    {
+      sectionKey: "elevate_look",
+      order: 2,
+      is_active: true,
+      products: elevateLookProducts,
+    },
+    {
+      sectionKey: "fresh_styles",
+      order: 3,
+      is_active: true,
+      products: freshStylesProducts,
+    },
+  ];
   const inserted = await LandingSection.insertMany(sections);
   console.log("LandingSection: inserted", inserted.length);
   return inserted;

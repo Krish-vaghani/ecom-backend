@@ -6,13 +6,11 @@ import {
   UpdateHeroSection,
   CreateBestCollectionsSection,
   UpdateBestCollectionsSection,
-  CreateFindPerfectPurseSection,
-  UpdateFindPerfectPurseSection,
   CreateElevateLookSection,
   UpdateElevateLookSection,
   CreateFreshStylesSection,
   UpdateFreshStylesSection,
-  GetAllLandingPageData,
+  GetAdminLandingPageData,
 } from "../../controller/LandingSection.js";
 import { UploadImage } from "../../controller/Upload.js";
 import { Authorization, AdminOnly } from "../../middlewear/AuthMiddlewear.js";
@@ -65,27 +63,23 @@ router.post("/admin/order/:id/create-shipment", ...adminAuth, CreateShipment);
 router.post("/admin/order/:id/generate-label", ...adminAuth, GenerateLabel);
 router.post("/admin/order/:id/request-pickup", ...adminAuth, RequestPickup);
 
-// Landing Section (admin) – all data in one API
-router.get("/admin/landing", ...adminAuth, GetAllLandingPageData);
+// Landing Section (admin) – full sections with _id for binding create/update APIs
+router.get("/admin/landing", ...adminAuth, GetAdminLandingPageData);
 router.put("/admin/landing/section/update/:id", ...adminAuth, UpdateSection);
 
-// Hero section
+// Hero section – create / update
 router.post("/admin/landing/hero", ...adminAuth, CreateHeroSection);
 router.put("/admin/landing/hero", ...adminAuth, UpdateHeroSection);
 
-// Best collections section
+// Best collections section – create / update (products array)
 router.post("/admin/landing/best-collections", ...adminAuth, CreateBestCollectionsSection);
 router.put("/admin/landing/best-collections", ...adminAuth, UpdateBestCollectionsSection);
 
-// Find perfect purse section
-router.post("/admin/landing/find-perfect-purse", ...adminAuth, CreateFindPerfectPurseSection);
-router.put("/admin/landing/find-perfect-purse", ...adminAuth, UpdateFindPerfectPurseSection);
-
-// Elevate look section
+// Elevate look section – create / update (products array, 4 items)
 router.post("/admin/landing/elevate-look", ...adminAuth, CreateElevateLookSection);
 router.put("/admin/landing/elevate-look", ...adminAuth, UpdateElevateLookSection);
 
-// Fresh styles section
+// Fresh styles section – create / update (products array)
 router.post("/admin/landing/fresh-styles", ...adminAuth, CreateFreshStylesSection);
 router.put("/admin/landing/fresh-styles", ...adminAuth, UpdateFreshStylesSection);
 

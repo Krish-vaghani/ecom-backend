@@ -4,16 +4,56 @@ import {
   UpdateLandingSectionValidate,
   HeroSectionValidate,
   BestCollectionsSectionValidate,
-  FindPerfectPurseSectionValidate,
   ElevateLookSectionValidate,
   FreshStylesSectionValidate,
 } from "../validators/LandingSectionValidator.js";
 
+const HERO_SECTION_KEY = "hero";
+const BEST_COLLECTIONS_SECTION_KEY = "best_collections";
+const ELEVATE_LOOK_SECTION_KEY = "elevate_look";
+const FRESH_STYLES_SECTION_KEY = "fresh_styles";
+const LANDING_SECTION_KEYS = [
+  HERO_SECTION_KEY,
+  BEST_COLLECTIONS_SECTION_KEY,
+  ELEVATE_LOOK_SECTION_KEY,
+  FRESH_STYLES_SECTION_KEY,
+];
 
-/** Returns all active landing sections in one response, keyed by sectionKey */
+const PRODUCT_ARRAY_KEYS = [
+  BEST_COLLECTIONS_SECTION_KEY,
+  ELEVATE_LOOK_SECTION_KEY,
+  FRESH_STYLES_SECTION_KEY,
+];
+
+/** Public API: returns landing data. For hero: single object. For best_collections, elevate_look, fresh_styles: direct array of products. */
 export const GetAllLandingPageData = async (req, res) => {
   try {
-    const sections = await LandingSection.find({ is_active: true })
+    const sections = await LandingSection.find({
+      is_active: true,
+      sectionKey: { $in: LANDING_SECTION_KEYS },
+    })
+      .sort({ order: 1 })
+      .lean();
+    const data = {};
+    for (const section of sections) {
+      if (PRODUCT_ARRAY_KEYS.includes(section.sectionKey)) {
+        data[section.sectionKey] = Array.isArray(section.products) ? section.products : [];
+      } else {
+        data[section.sectionKey] = section;
+      }
+    }
+    return res.status(200).json({ message: "Landing page data fetched.", data });
+  } catch (err) {
+    return res.status(500).json({ message: "Server error.", error: err.message });
+  }
+};
+
+/** Admin API: returns full section documents (with _id, order, is_active, products) so admin can bind create/update APIs. */
+export const GetAdminLandingPageData = async (req, res) => {
+  try {
+    const sections = await LandingSection.find({
+      sectionKey: { $in: LANDING_SECTION_KEYS },
+    })
       .sort({ order: 1 })
       .lean();
     const data = {};
@@ -103,7 +143,7 @@ export const UpdateHeroSection = async (req, res) => {
   }
 };
 
-// Best collections section (single record: create / get / update – all schema fields)
+// Best collections section (single record with products array – multiple products)
 export const CreateBestCollectionsSection = async (req, res) => {
   const { error } = BestCollectionsSectionValidate.validate(req.body);
   if (error) {
@@ -120,13 +160,7 @@ export const CreateBestCollectionsSection = async (req, res) => {
       sectionKey: BEST_COLLECTIONS_SECTION_KEY,
       order: req.body.order ?? 0,
       is_active: req.body.is_active ?? true,
-      images: Array.isArray(req.body.images) ? req.body.images : [],
-      price: req.body.price ?? null,
-      originalPrice: req.body.originalPrice ?? null,
-      rating: req.body.rating ?? null,
-      numberOfReviews: req.body.numberOfReviews ?? 0,
-      tags: Array.isArray(req.body.tags) ? req.body.tags : [],
-      colors: Array.isArray(req.body.colors) ? req.body.colors : [],
+      products: Array.isArray(req.body.products) ? req.body.products : [],
     };
     const result = await SingleRecordOperation("i", LandingSection, payload);
     return res.status(result.status).json({ message: "Best collections section created.", data: result.data });
@@ -150,13 +184,7 @@ export const UpdateBestCollectionsSection = async (req, res) => {
     const updateData = {};
     if (req.body.order !== undefined) updateData.order = req.body.order;
     if (req.body.is_active !== undefined) updateData.is_active = req.body.is_active;
-    if (req.body.images !== undefined) updateData.images = req.body.images;
-    if (req.body.price !== undefined) updateData.price = req.body.price;
-    if (req.body.originalPrice !== undefined) updateData.originalPrice = req.body.originalPrice;
-    if (req.body.rating !== undefined) updateData.rating = req.body.rating;
-    if (req.body.numberOfReviews !== undefined) updateData.numberOfReviews = req.body.numberOfReviews;
-    if (req.body.tags !== undefined) updateData.tags = req.body.tags;
-    if (req.body.colors !== undefined) updateData.colors = req.body.colors;
+    if (req.body.products !== undefined) updateData.products = req.body.products;
 
     const result = await SingleRecordOperation("u", LandingSection, {
       _id: exist.data._id,
@@ -168,59 +196,7 @@ export const UpdateBestCollectionsSection = async (req, res) => {
   }
 };
 
-// Find perfect purse section (single record: create / get / update – image and order only)
-export const CreateFindPerfectPurseSection = async (req, res) => {
-  const { error } = FindPerfectPurseSectionValidate.validate(req.body);
-  if (error) {
-    return res.status(400).json({ message: error.details[0].message });
-  }
-
-  try {
-    const existing = await FindOne(LandingSection, { sectionKey: FIND_PERFECT_PURSE_SECTION_KEY });
-    if (existing.status === 200) {
-      return res.status(409).json({ message: "Find perfect purse section already exists. Use update instead." });
-    }
-
-    const payload = {
-      sectionKey: FIND_PERFECT_PURSE_SECTION_KEY,
-      order: req.body.order ?? 0,
-      is_active: true,
-      images: req.body.image ? [req.body.image] : [],
-    };
-    const result = await SingleRecordOperation("i", LandingSection, payload);
-    return res.status(result.status).json({ message: "Find perfect purse section created.", data: result.data });
-  } catch (err) {
-    return res.status(500).json({ message: "Server error.", error: err.message });
-  }
-};
-
-export const UpdateFindPerfectPurseSection = async (req, res) => {
-  const { error } = FindPerfectPurseSectionValidate.validate(req.body);
-  if (error) {
-    return res.status(400).json({ message: error.details[0].message });
-  }
-
-  try {
-    const exist = await FindOne(LandingSection, { sectionKey: FIND_PERFECT_PURSE_SECTION_KEY });
-    if (exist.status !== 200) {
-      return res.status(404).json({ message: "Find perfect purse section not found." });
-    }
-
-    const updateData = {};
-    if (req.body.image !== undefined) updateData.images = req.body.image ? [req.body.image] : [];
-    if (req.body.order !== undefined) updateData.order = req.body.order;
-
-    const result = await SingleRecordOperation("u", LandingSection, {
-      _id: exist.data._id,
-      ...updateData,
-    });
-    return res.status(result.status).json({ message: "Find perfect purse section updated.", data: result.data });
-  } catch (err) {
-    return res.status(500).json({ message: "Server error.", error: err.message });
-  }
-};
-
-// Elevate look section (single record: create / get / update – image and order only)
+// Elevate look section (single record with products array – always 4 products)
 export const CreateElevateLookSection = async (req, res) => {
   const { error } = ElevateLookSectionValidate.validate(req.body);
   if (error) {
@@ -233,11 +209,14 @@ export const CreateElevateLookSection = async (req, res) => {
       return res.status(409).json({ message: "Elevate look section already exists. Use update instead." });
     }
 
+    const products = Array.isArray(req.body.products) && req.body.products.length === 4
+      ? req.body.products
+      : [];
     const payload = {
       sectionKey: ELEVATE_LOOK_SECTION_KEY,
       order: req.body.order ?? 0,
       is_active: true,
-      images: req.body.image ? [req.body.image] : [],
+      products,
     };
     const result = await SingleRecordOperation("i", LandingSection, payload);
     return res.status(result.status).json({ message: "Elevate look section created.", data: result.data });
@@ -259,8 +238,8 @@ export const UpdateElevateLookSection = async (req, res) => {
     }
 
     const updateData = {};
-    if (req.body.image !== undefined) updateData.images = req.body.image ? [req.body.image] : [];
     if (req.body.order !== undefined) updateData.order = req.body.order;
+    if (req.body.products !== undefined) updateData.products = req.body.products;
 
     const result = await SingleRecordOperation("u", LandingSection, {
       _id: exist.data._id,
@@ -272,7 +251,7 @@ export const UpdateElevateLookSection = async (req, res) => {
   }
 };
 
-// Fresh styles section (single record: create / get / update – all schema fields, same as best_collections)
+// Fresh styles section (single record with products array – multiple products)
 export const CreateFreshStylesSection = async (req, res) => {
   const { error } = FreshStylesSectionValidate.validate(req.body);
   if (error) {
@@ -289,13 +268,7 @@ export const CreateFreshStylesSection = async (req, res) => {
       sectionKey: FRESH_STYLES_SECTION_KEY,
       order: req.body.order ?? 0,
       is_active: req.body.is_active ?? true,
-      images: Array.isArray(req.body.images) ? req.body.images : [],
-      price: req.body.price ?? null,
-      originalPrice: req.body.originalPrice ?? null,
-      rating: req.body.rating ?? null,
-      numberOfReviews: req.body.numberOfReviews ?? 0,
-      tags: Array.isArray(req.body.tags) ? req.body.tags : [],
-      colors: Array.isArray(req.body.colors) ? req.body.colors : [],
+      products: Array.isArray(req.body.products) ? req.body.products : [],
     };
     const result = await SingleRecordOperation("i", LandingSection, payload);
     return res.status(result.status).json({ message: "Fresh styles section created.", data: result.data });
@@ -319,13 +292,7 @@ export const UpdateFreshStylesSection = async (req, res) => {
     const updateData = {};
     if (req.body.order !== undefined) updateData.order = req.body.order;
     if (req.body.is_active !== undefined) updateData.is_active = req.body.is_active;
-    if (req.body.images !== undefined) updateData.images = req.body.images;
-    if (req.body.price !== undefined) updateData.price = req.body.price;
-    if (req.body.originalPrice !== undefined) updateData.originalPrice = req.body.originalPrice;
-    if (req.body.rating !== undefined) updateData.rating = req.body.rating;
-    if (req.body.numberOfReviews !== undefined) updateData.numberOfReviews = req.body.numberOfReviews;
-    if (req.body.tags !== undefined) updateData.tags = req.body.tags;
-    if (req.body.colors !== undefined) updateData.colors = req.body.colors;
+    if (req.body.products !== undefined) updateData.products = req.body.products;
 
     const result = await SingleRecordOperation("u", LandingSection, {
       _id: exist.data._id,

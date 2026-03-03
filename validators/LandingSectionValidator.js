@@ -9,15 +9,7 @@ const TextBlockSchema = Joi.object({
 
 export const LandingSectionValidate = Joi.object({
   sectionKey: Joi.string()
-    .valid(
-      "hero",
-      "best_collections",
-      "find_perfect_purse",
-      "elevate_look",
-      "fresh_styles",
-      "testimonials",
-      "crafted_confidence"
-    )
+    .valid("hero", "best_collections", "elevate_look", "fresh_styles")
     .required(),
   title: Joi.string().allow("").optional(),
   subtitle: Joi.string().allow("").optional(),
@@ -53,9 +45,7 @@ const ColorItemSchema = Joi.object({
   images: Joi.string().allow(null).optional(),
 });
 
-export const BestCollectionsSectionValidate = Joi.object({
-  order: Joi.number().optional(),
-  is_active: Joi.boolean().optional(),
+const LandingProductItemSchema = Joi.object({
   images: Joi.array().items(Joi.string()).optional(),
   price: Joi.number().allow(null).optional(),
   originalPrice: Joi.number().allow(null).optional(),
@@ -65,30 +55,24 @@ export const BestCollectionsSectionValidate = Joi.object({
     .items(Joi.string().valid("bestseller", "hot", "trending", "sale"))
     .optional(),
   colors: Joi.array().items(ColorItemSchema).optional(),
+});
+
+export const BestCollectionsSectionValidate = Joi.object({
+  order: Joi.number().optional(),
+  is_active: Joi.boolean().optional(),
+  products: Joi.array().items(LandingProductItemSchema).optional(),
 });
 
 export const FreshStylesSectionValidate = Joi.object({
   order: Joi.number().optional(),
   is_active: Joi.boolean().optional(),
-  images: Joi.array().items(Joi.string()).optional(),
-  price: Joi.number().allow(null).optional(),
-  originalPrice: Joi.number().allow(null).optional(),
-  rating: Joi.number().min(0).allow(null).optional(),
-  numberOfReviews: Joi.number().integer().min(0).optional(),
-  tags: Joi.array()
-    .items(Joi.string().valid("bestseller", "hot", "trending", "sale"))
-    .optional(),
-  colors: Joi.array().items(ColorItemSchema).optional(),
-});
-
-export const FindPerfectPurseSectionValidate = Joi.object({
-  image: Joi.string().allow(null, "").optional(),
-  order: Joi.number().optional(),
+  products: Joi.array().items(LandingProductItemSchema).optional(),
 });
 
 export const ElevateLookSectionValidate = Joi.object({
-  image: Joi.string().allow(null, "").optional(),
   order: Joi.number().optional(),
+  is_active: Joi.boolean().optional(),
+  products: Joi.array().items(LandingProductItemSchema).min(4).max(4).optional(),
 });
 
 export const UpdateLandingSectionValidate = Joi.object({
@@ -112,4 +96,5 @@ export const UpdateLandingSectionValidate = Joi.object({
   price: Joi.number().allow(null).optional(),
   numberOfReviews: Joi.number().integer().min(0).optional(),
   rating: Joi.number().min(0).allow(null).optional(),
+  products: Joi.array().items(LandingProductItemSchema).optional(),
 }).min(1);

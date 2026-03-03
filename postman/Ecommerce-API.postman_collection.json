@@ -683,7 +683,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"order\": 0,\n  \"is_active\": true,\n  \"images\": [],\n  \"price\": null,\n  \"originalPrice\": null,\n  \"rating\": null,\n  \"numberOfReviews\": 0,\n  \"tags\": [],\n  \"colors\": []\n}"
+                  "raw": "{\n  \"order\": 1,\n  \"is_active\": true,\n  \"products\": [\n    {\n      \"images\": [\"https://images.unsplash.com/photo-1548036328-c9fa89d128fa\"],\n      \"price\": 2499,\n      \"originalPrice\": 2999,\n      \"rating\": 4.5,\n      \"numberOfReviews\": 24,\n      \"tags\": [\"bestseller\"],\n      \"colors\": [{\"colorCode\": \"#8B4513\", \"images\": \"https://images.unsplash.com/photo-1548036328-c9fa89d128fa\"}]\n    }\n  ]\n}"
                 },
                 "url": "{{baseUrl}}/api/admin/landing/best-collections"
               }
@@ -698,39 +698,9 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"order\": 0,\n  \"is_active\": true\n}"
+                  "raw": "{\n  \"order\": 1,\n  \"is_active\": true,\n  \"products\": []\n}"
                 },
                 "url": "{{baseUrl}}/api/admin/landing/best-collections"
-              }
-            },
-            {
-              "name": "Create Find Perfect Purse Section",
-              "request": {
-                "method": "POST",
-                "header": [
-                  { "key": "Content-Type", "value": "application/json" },
-                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"image\": null,\n  \"order\": 0\n}"
-                },
-                "url": "{{baseUrl}}/api/admin/landing/find-perfect-purse"
-              }
-            },
-            {
-              "name": "Update Find Perfect Purse Section",
-              "request": {
-                "method": "PUT",
-                "header": [
-                  { "key": "Content-Type", "value": "application/json" },
-                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"image\": \"\",\n  \"order\": 0\n}"
-                },
-                "url": "{{baseUrl}}/api/admin/landing/find-perfect-purse"
               }
             },
             {
@@ -743,7 +713,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"image\": null,\n  \"order\": 0\n}"
+                  "raw": "{\n  \"order\": 2,\n  \"is_active\": true,\n  \"products\": [\n    {\"images\": [\"\"], \"price\": 1999, \"originalPrice\": 2499, \"rating\": 4, \"numberOfReviews\": 10, \"tags\": [], \"colors\": []},\n    {\"images\": [\"\"], \"price\": 2199, \"originalPrice\": 2699, \"rating\": 4.2, \"numberOfReviews\": 15, \"tags\": [], \"colors\": []},\n    {\"images\": [\"\"], \"price\": 1899, \"originalPrice\": 2399, \"rating\": 4.5, \"numberOfReviews\": 8, \"tags\": [], \"colors\": []},\n    {\"images\": [\"\"], \"price\": 2599, \"originalPrice\": 2999, \"rating\": 4.8, \"numberOfReviews\": 32, \"tags\": [], \"colors\": []}\n  ]\n}"
                 },
                 "url": "{{baseUrl}}/api/admin/landing/elevate-look"
               }
@@ -758,7 +728,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"image\": \"\",\n  \"order\": 0\n}"
+                  "raw": "{\n  \"order\": 2,\n  \"products\": []\n}"
                 },
                 "url": "{{baseUrl}}/api/admin/landing/elevate-look"
               }
@@ -773,7 +743,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"order\": 0,\n  \"is_active\": true,\n  \"images\": [],\n  \"price\": null,\n  \"originalPrice\": null,\n  \"rating\": null,\n  \"numberOfReviews\": 0,\n  \"tags\": [],\n  \"colors\": []\n}"
+                  "raw": "{\n  \"order\": 3,\n  \"is_active\": true,\n  \"products\": []\n}"
                 },
                 "url": "{{baseUrl}}/api/admin/landing/fresh-styles"
               }
@@ -788,7 +758,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"order\": 0,\n  \"is_active\": true\n}"
+                  "raw": "{\n  \"order\": 3,\n  \"is_active\": true,\n  \"products\": []\n}"
                 },
                 "url": "{{baseUrl}}/api/admin/landing/fresh-styles"
               }

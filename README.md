@@ -9,15 +9,12 @@ One document per section. All images and copy are admin-managed.
 
 | sectionKey | UI section | Admin-managed fields |
 |------------|-------------|----------------------|
-| `hero` | Hero banner | mainHeadline, subHeadline, backgroundImage, ctaButtonText, ctaButtonLink, featuredProductId |
-| `best_collections` | Our Best Collections | title, subtitle |
-| `find_perfect_purse` | Find Your Perfect Purse (category icons) | title, subtitle *(categories have iconImage)* |
-| `elevate_look` | Elevate Your Everyday Look | title, mainImage, images[], textBlocks[] (title, description, ctaText, ctaLink) |
-| `fresh_styles` | Fresh Styles Just Dropped | title, subtitle, sectionCtaText, sectionCtaLink |
-| `testimonials` | What Our Clients Say | title, subtitle *(Testimonial collection)* |
-| `crafted_confidence` | Crafted For Confidence | title, subtitle, sectionCtaText, sectionCtaLink *(Feature collection)* |
+| `hero` | Hero banner | images[], price, rating, numberOfReviews |
+| `best_collections` | Our Best Collections | products[] (multiple; each: images, price, originalPrice, rating, numberOfReviews, tags, colors) |
+| `elevate_look` | Elevate Your Everyday Look | products[] (always 4 items; same shape as above) |
+| `fresh_styles` | Fresh Styles Just Dropped | products[] (multiple; same shape as above) |
 
-Common: title, subtitle, description, order, is_active, image, images.
+Common: order, is_active. Landing API returns only these four sections.
 
 ### Category (Find Your Perfect Purse icons)
 | Field     | Type    | Description |
@@ -138,10 +135,13 @@ Common: title, subtitle, description, order, is_active, image, images.
 | GET    | /v1/product/list  | No  | List products (?categoryId, tag=bestseller\|hot\|trending\|sale, page, limit) |
 | PUT    | /v1/product/update/:id | Yes | Update product |
 | DELETE | /v1/product/delete/:id | Yes | Soft delete product |
-| POST   | /v1/landing/section/add | Yes | Add section (sectionKey: hero, best_collections, find_perfect_purse, elevate_look, fresh_styles, testimonials, crafted_confidence) |
-| GET    | /v1/landing/sections | No  | List all sections (populates featuredProductId for hero) |
-| GET    | /v1/landing/section/:sectionKey | No  | Get one section by key |
-| PUT    | /v1/landing/section/update/:id | Yes | Update section (all images & copy) |
+| GET    | /v1/landing | No  | Get all landing data (hero, best_collections, elevate_look, fresh_styles) |
+| GET    | /admin/landing | Admin | Same as v1/landing (for admin) |
+| PUT    | /admin/landing/section/update/:id | Admin | Update section (including products[] for best_collections, elevate_look, fresh_styles) |
+| POST/PUT | /admin/landing/hero | Admin | Create/update hero (images, price, rating, numberOfReviews) |
+| POST/PUT | /admin/landing/best-collections | Admin | Create/update best collections (products array) |
+| POST/PUT | /admin/landing/elevate-look | Admin | Create/update elevate look (products array, 4 items) |
+| POST/PUT | /admin/landing/fresh-styles | Admin | Create/update fresh styles (products array) |
 | POST   | /v1/testimonial/add | Yes | Add testimonial (clientName, clientImage, rating, quote, clientLocation?, displayOrder?) |
 | GET    | /v1/testimonial/list | No  | List testimonials |
 | PUT    | /v1/testimonial/update/:id | Yes | Update testimonial |
