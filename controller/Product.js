@@ -102,18 +102,6 @@ export const GetProductDetail = async (req, res) => {
 
     const productId = product._id;
 
-    // Build images: main + all from color variants (thumbnails)
-    const images = [product.image].filter(Boolean);
-    (product.colorVariants || []).forEach((v) => {
-      (v.images || []).forEach((img) => {
-        if (img && !images.includes(img)) images.push(img);
-      });
-    });
-    if (images.length === 0 && (product.colorVariants || []).length > 0) {
-      const first = product.colorVariants[0].images?.[0];
-      if (first) images.push(first);
-    }
-
     // Star breakdown and reviews from ProductReview
     const [reviewsAgg, reviewsList] = await Promise.all([
       ProductReview.aggregate([
@@ -151,16 +139,22 @@ export const GetProductDetail = async (req, res) => {
         ? originalPrice - currentPrice
         : null;
 
+    // Mark first color variant as default (for frontend to know which color to select)
+    const colorVariantsWithDefault = (product.colorVariants || []).map((v, index) => ({
+      ...v,
+      default: index === 0,
+    }));
+
     return res.status(200).json({
       message: "Product detail fetched.",
       data: {
         ...product,
+        colorVariants: colorVariantsWithDefault,
         currentPrice,
         originalPrice: originalPrice || undefined,
         savings: savings ?? undefined,
         averageRating: averageRating ?? undefined,
         numberOfReviews,
-        images,
         starBreakdown,
         reviews: reviewsList,
         reviewPage,

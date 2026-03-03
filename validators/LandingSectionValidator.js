@@ -46,6 +46,7 @@ const ColorItemSchema = Joi.object({
 });
 
 const LandingProductItemSchema = Joi.object({
+  product: Joi.string().optional(),
   images: Joi.array().items(Joi.string()).optional(),
   price: Joi.number().allow(null).optional(),
   originalPrice: Joi.number().allow(null).optional(),

@@ -30,6 +30,7 @@ const LandingSectionSchema = new mongoose.Schema(
     // For best_collections (multiple), elevate_look (4), fresh_styles (multiple): array of product items
     products: [
       {
+        product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
         images: [{ type: String }],
         price: { type: Number, default: null },
         originalPrice: { type: Number, default: null },

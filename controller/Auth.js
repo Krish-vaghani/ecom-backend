@@ -127,7 +127,13 @@ export const Login = async (req, res) => {
     return res.status(400).json({ message: error.details[0].message });
   }
 
-  const { phone, otp, cartItems: incomingCartItems, wishlist: incomingWishlist } = req.body;
+  const {
+    phone,
+    otp,
+    name: incomingName,
+    cartItems: incomingCartItems,
+    wishlist: incomingWishlist,
+  } = req.body;
   try {
     const userFind = await FindOne(User, { phone });
     if (userFind.status !== 200 || !userFind.data) {
@@ -184,15 +190,23 @@ export const Login = async (req, res) => {
       }
     }
 
-    // Hard delete OTP fields and save merged cart/wishlist after successful login
+    // Prepare update payload: clear OTP, merge cart/wishlist, and optionally update name
+    const updateSet = {
+      cartItems: mergedCartItems,
+      wishlist: mergedWishlist,
+    };
+
+    const trimmedIncomingName =
+      typeof incomingName === "string" ? incomingName.trim() : "";
+    if (trimmedIncomingName && trimmedIncomingName !== user.name) {
+      updateSet.name = trimmedIncomingName;
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       user._id,
       {
         $unset: { otp: "", otpExpires: "" },
-        $set: {
-          cartItems: mergedCartItems,
-          wishlist: mergedWishlist,
-        },
+        $set: updateSet,
       },
       { new: true }
     ).lean();
