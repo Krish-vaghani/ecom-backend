@@ -18,35 +18,96 @@ function isValidObjectId(id) {
   return s.length === 24 && /^[a-fA-F0-9]{24}$/.test(s);
 }
 
+function slugifyName(name) {
+  return String(name || "Landing Product")
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+}
+
 /**
- * Validate that every item has a valid product id that exists in DB.
- * Normalize colors[].images to array and colors[].default to boolean.
- * Returns { ok: true, products } or { ok: false, message }.
+ * From admin payload, ensure each landing product item has a valid Product reference.
+ * - If product id is provided and valid, verify it exists (keep it).
+ * - If product id is missing/invalid/not found, create a new Product using
+ *   the landing data (name, description, images, price, colors, tags, etc.)
+ *   and set item.product to that id.
+ * - Always normalize colors[].images to array and colors[].default to boolean.
+ *
+ * Returns { ok: true, products } or throws on unexpected DB errors.
  */
 async function validateAndNormalizeLandingProducts(rawProducts) {
   if (!Array.isArray(rawProducts)) return { ok: true, products: [] };
 
   const products = [];
   for (let i = 0; i < rawProducts.length; i++) {
-    const p = rawProducts[i];
-    const productId = p.product;
-    if (!productId || !isValidObjectId(productId)) {
-      return {
-        ok: false,
-        message: `products[${i}].product is required and must be a valid 24-character product id. Create the product via Admin - Product Add first.`,
-      };
-    }
-    const exists = await Product.findOne({ _id: productId, is_active: true })
-      .select("_id")
-      .lean();
-    if (!exists) {
-      return {
-        ok: false,
-        message: `products[${i}].product: product not found or inactive. Create the product via Admin - Product Add first.`,
-      };
+    const src = rawProducts[i] || {};
+    const item = { ...src };
+
+    let productId = item.product;
+    if (productId && isValidObjectId(productId)) {
+      const existing = await Product.findOne({ _id: productId, is_active: true })
+        .select("_id")
+        .lean();
+      if (!existing) {
+        productId = null;
+      }
+    } else {
+      productId = null;
     }
 
-    const item = { ...p };
+    if (!productId) {
+      const baseName = item.name || "Landing Product";
+      const slugBase = slugifyName(baseName);
+      const slug = `${slugBase}-${Date.now().toString(36)}`;
+
+      const imagesArr = Array.isArray(item.images) ? item.images : [];
+      let mainImage = imagesArr[0] || null;
+      if (!mainImage && Array.isArray(item.colors) && item.colors.length > 0) {
+        const firstColorImages = item.colors[0]?.images;
+        if (Array.isArray(firstColorImages) && firstColorImages[0]) {
+          mainImage = firstColorImages[0];
+        }
+      }
+
+      const price =
+        item.price != null
+          ? item.price
+          : item.originalPrice != null
+          ? item.originalPrice
+          : 0;
+
+      const colorVariants = Array.isArray(item.colors)
+        ? item.colors.map((c, idx) => ({
+            colorCode: c.colorCode || null,
+            colorName: "",
+            images: Array.isArray(c.images) ? c.images : [],
+            default: idx === 0,
+          }))
+        : [];
+
+      const newProduct = await Product.create({
+        name: baseName,
+        slug,
+        shortDescription: item.shortDescription || "",
+        description: item.description || "",
+        category: item.category || "purse",
+        price,
+        salePrice:
+          item.originalPrice != null && item.originalPrice > price ? price : null,
+        image: mainImage,
+        tags: item.tags || [],
+        colorVariants,
+        dimensions: {},
+        averageRating: item.rating ?? null,
+        numberOfReviews: item.numberOfReviews ?? 0,
+        is_active: true,
+      });
+
+      productId = newProduct._id;
+    }
+
+    item.product = productId;
+
     if (Array.isArray(item.colors)) {
       item.colors = item.colors.map((c) => ({
         colorCode: c.colorCode != null ? String(c.colorCode) : "",
@@ -54,8 +115,10 @@ async function validateAndNormalizeLandingProducts(rawProducts) {
         default: Boolean(c.default),
       }));
     }
+
     products.push(item);
   }
+
   return { ok: true, products };
 }
 const BEST_COLLECTIONS_SECTION_KEY = "best_collections";

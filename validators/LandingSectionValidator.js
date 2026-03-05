@@ -47,9 +47,13 @@ const ColorItemSchema = Joi.object({
 });
 
 const LandingProductItemSchema = Joi.object({
-  product: Joi.string().required().messages({
-    "any.required": "Product id is required for each item. Create product via Admin - Product Add first.",
-  }),
+  // Optional existing product id. If omitted, backend will create a Product
+  // using the other fields (name, description, price, images, colors, etc.).
+  product: Joi.string().optional(),
+  name: Joi.string().min(1).max(200).optional(),
+  shortDescription: Joi.string().allow("").optional(),
+  description: Joi.string().allow("").optional(),
+  category: Joi.string().valid("jwellery", "purse").optional(),
   images: Joi.array().items(Joi.string()).optional(),
   price: Joi.number().allow(null).optional(),
   originalPrice: Joi.number().allow(null).optional(),
