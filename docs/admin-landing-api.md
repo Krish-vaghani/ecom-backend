@@ -1,13 +1,138 @@
-# Admin – Landing Page APIs
+# Admin – Landing Page & Product APIs
 
 Base URL: `https://api.pursolina.com/api`  
 All admin endpoints require: **Header** `Authorization: Bearer <admin_token>`
 
 ---
 
-## 1. Get all landing sections (for binding forms)
+## Overview – New Flow
+
+Products now carry a `landingSection` field (enum) that determines which section they appear in on the landing page.
+
+| `landingSection` value | Landing section |
+|---|---|
+| `"hero"` | Hero section |
+| `"best_collections"` | Best Collections |
+| `"elevate_look"` | Elevate Look |
+| `"fresh_styles"` | Fresh Styles |
+| `null` (default) | Regular product only – not on landing page |
+
+**Admin flow:**
+1. Call **GET** `/admin/product/list` to see all products and their current `landingSection` assignment.
+2. To assign a product to a landing section, call **PUT** `/admin/product/update/:id` with `{ "landingSection": "best_collections" }`.
+3. To remove a product from a landing section, send `{ "landingSection": null }`.
+4. The landing page (**GET** `/v1/landing`) automatically reflects these assignments – no separate section-update call needed.
+
+---
+
+## 1. Admin – List all products
+
+**GET** `/admin/product/list`
+
+Shows **all products** (active + inactive) with their `landingSection` assignment.
+
+### Query parameters
+
+| Param | Type | Description |
+|---|---|---|
+| `page` | number | Page number (default: 1) |
+| `limit` | number | Items per page (default: 10) |
+| `category` | string | Filter by `jwellery` or `purse` |
+| `tag` | string | Filter by `bestseller`, `hot`, `trending`, `sale` |
+| `landingSection` | string | Filter by `hero`, `best_collections`, `elevate_look`, `fresh_styles` |
+| `is_active` | boolean string | `"true"` or `"false"` to filter by active status |
+
+```bash
+curl --location 'https://api.pursolina.com/api/admin/product/list' \
+--header 'Authorization: Bearer YOUR_ADMIN_TOKEN'
+```
+
+**Response (200):**
+```json
+{
+  "message": "Products fetched.",
+  "data": [
+    {
+      "_id": "64f1a2b3c4d5e6f7a8b9c0d1",
+      "name": "Classic Purse",
+      "slug": "classic-purse",
+      "category": "purse",
+      "price": 1999,
+      "salePrice": null,
+      "landingSection": "best_collections",
+      "tags": ["bestseller"],
+      "is_active": true,
+      "colorVariants": [...],
+      "createdAt": "...",
+      "updatedAt": "..."
+    }
+  ],
+  "total": 42,
+  "page": 1,
+  "limit": 10
+}
+```
+
+---
+
+## 2. Add a product (with optional landing section)
+
+**POST** `/admin/product/add`
+
+```bash
+curl --location 'https://api.pursolina.com/api/admin/product/add' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer YOUR_ADMIN_TOKEN' \
+--data '{
+  "name": "Golden Jhumka",
+  "slug": "golden-jhumka",
+  "category": "jwellery",
+  "price": 2499,
+  "salePrice": 1999,
+  "landingSection": "best_collections",
+  "tags": ["bestseller"],
+  "image": "https://example.com/img.jpg",
+  "colorVariants": [
+    { "colorCode": "#FFD700", "colorName": "Gold", "images": ["https://example.com/gold.jpg"], "default": true }
+  ]
+}'
+```
+
+`landingSection` values: `"hero"`, `"best_collections"`, `"elevate_look"`, `"fresh_styles"`, or omit/`null` for no landing section.
+
+---
+
+## 3. Update a product – assign / remove landing section
+
+**PUT** `/admin/product/update/:id`
+
+```bash
+# Assign to Best Collections
+curl --location --request PUT 'https://api.pursolina.com/api/admin/product/update/PRODUCT_ID' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer YOUR_ADMIN_TOKEN' \
+--data '{ "landingSection": "best_collections" }'
+
+# Move to Elevate Look
+curl --location --request PUT 'https://api.pursolina.com/api/admin/product/update/PRODUCT_ID' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer YOUR_ADMIN_TOKEN' \
+--data '{ "landingSection": "elevate_look" }'
+
+# Remove from landing page
+curl --location --request PUT 'https://api.pursolina.com/api/admin/product/update/PRODUCT_ID' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer YOUR_ADMIN_TOKEN' \
+--data '{ "landingSection": null }'
+```
+
+---
+
+## 4. Get all landing sections (admin view)
 
 **GET** `/admin/landing`
+
+Returns section config (from LandingSection docs) merged with products from the Product collection grouped by `landingSection`.
 
 ```bash
 curl --location 'https://api.pursolina.com/api/admin/landing' \
@@ -20,55 +145,36 @@ curl --location 'https://api.pursolina.com/api/admin/landing' \
   "message": "Landing page data fetched.",
   "data": {
     "hero": {
-      "_id": "69a6a750edd1d00ca9626ddc",
       "sectionKey": "hero",
+      "_id": "...",
       "order": 0,
       "is_active": true,
-      "images": ["https://example.com/hero1.jpg", "https://example.com/hero2.jpg"],
+      "images": ["https://example.com/hero1.jpg"],
       "price": 2499,
-      "originalPrice": 2999,
       "rating": 4.5,
       "numberOfReviews": 42,
-      "createdAt": "2026-03-03T09:18:08.811Z",
-      "updatedAt": "2026-03-03T09:35:23.621Z"
-    },
-    "best_collections": {
-      "_id": "69a6a750edd1d00ca9626dd1",
-      "sectionKey": "best_collections",
-      "order": 1,
-      "is_active": true,
       "products": [
         {
-          "product": "69a6a750edd1d00ca9626dd0",
-          "images": ["https://example.com/p1.jpg"],
-          "price": 1999,
-          "originalPrice": 2499,
-          "rating": 4.2,
-          "numberOfReviews": 18,
-          "tags": ["bestseller"],
-          "colors": [{ "colorCode": "#000", "images": "https://example.com/p1.jpg" }]
+          "_id": "...",
+          "name": "Featured Purse",
+          "landingSection": "hero",
+          "price": 2499,
+          "colorVariants": [...],
+          ...
         }
-      ],
-      "createdAt": "...",
-      "updatedAt": "..."
+      ]
+    },
+    "best_collections": {
+      "sectionKey": "best_collections",
+      "products": [ { "_id": "...", "name": "Classic Purse", "landingSection": "best_collections", ... } ]
     },
     "elevate_look": {
-      "_id": "69a6a750edd1d00ca9626dd2",
       "sectionKey": "elevate_look",
-      "order": 2,
-      "is_active": true,
-      "products": [ /* 4 items */ ],
-      "createdAt": "...",
-      "updatedAt": "..."
+      "products": [ ... ]
     },
     "fresh_styles": {
-      "_id": "69a6a750edd1d00ca9626dd3",
       "sectionKey": "fresh_styles",
-      "order": 3,
-      "is_active": true,
-      "products": [ /* multiple items */ ],
-      "createdAt": "...",
-      "updatedAt": "..."
+      "products": [ ... ]
     }
   }
 }
@@ -76,36 +182,11 @@ curl --location 'https://api.pursolina.com/api/admin/landing' \
 
 ---
 
-## 2. Update any section by ID (generic)
+## 5. Hero section config (images / price / rating)
 
-**PUT** `/admin/landing/section/update/:id`
+The hero section still supports storing banner images, price, and rating via the LandingSection document. These appear alongside the `products` array in the response.
 
-Use the section `_id` from GET admin/landing. Body can include any allowed fields (order, is_active, images, price, products, etc.).
-
-```bash
-curl --location --request PUT 'https://api.pursolina.com/api/admin/landing/section/update/SECTION_ID' \
---header 'Content-Type: application/json' \
---header 'Authorization: Bearer YOUR_ADMIN_TOKEN' \
---data '{
-  "order": 1,
-  "is_active": true,
-  "images": ["https://example.com/new.jpg"]
-}'
-```
-
-**Response (200):**
-```json
-{
-  "message": "Section updated.",
-  "data": { "_id": "...", "sectionKey": "hero", "order": 1, "is_active": true, "images": ["..."], ... }
-}
-```
-
----
-
-## 3. Hero section
-
-### Create hero (only if hero does not exist)
+### Create hero config (only if it does not exist)
 
 **POST** `/admin/landing/hero`
 
@@ -121,29 +202,7 @@ curl --location 'https://api.pursolina.com/api/admin/landing/hero' \
 }'
 ```
 
-**Response (200):**
-```json
-{
-  "message": "Hero section created.",
-  "data": {
-    "_id": "69a6a750edd1d00ca9626ddc",
-    "sectionKey": "hero",
-    "order": 0,
-    "is_active": true,
-    "images": ["https://example.com/hero1.jpg", "https://example.com/hero2.jpg"],
-    "price": 2499,
-    "rating": 4.5,
-    "numberOfReviews": 42
-  }
-}
-```
-
-**If hero already exists (409):**
-```json
-{ "message": "Hero section already exists. Use update instead." }
-```
-
-### Update hero
+### Update hero config
 
 **PUT** `/admin/landing/hero`
 
@@ -159,225 +218,77 @@ curl --location --request PUT 'https://api.pursolina.com/api/admin/landing/hero'
 }'
 ```
 
-**Response (200):**
+---
+
+## 6. Generic section update (order / is_active)
+
+**PUT** `/admin/landing/section/update/:id`
+
+Use the section `_id` from **GET** `/admin/landing` to patch metadata fields (`order`, `is_active`, etc.).
+
+```bash
+curl --location --request PUT 'https://api.pursolina.com/api/admin/landing/section/update/SECTION_ID' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer YOUR_ADMIN_TOKEN' \
+--data '{ "order": 1, "is_active": true }'
+```
+
+---
+
+## 7. Public – Product listing (with optional landingSection filter)
+
+**GET** `/v1/product/list`
+
+```bash
+# All active products
+GET /v1/product/list?page=1&limit=10
+
+# Only best_collections products
+GET /v1/product/list?landingSection=best_collections
+
+# Filter by category and landing section
+GET /v1/product/list?category=purse&landingSection=fresh_styles
+```
+
+Each product in the response includes the `landingSection` field.
+
+---
+
+## 8. Public – Landing page
+
+**GET** `/v1/landing`
+
+Automatically returns products grouped by their `landingSection` field.
+
 ```json
 {
-  "message": "Hero section updated.",
-  "data": { "_id": "...", "sectionKey": "hero", "images": ["..."], "price": 2599, ... }
+  "message": "Landing page data fetched.",
+  "data": {
+    "hero": {
+      "images": ["https://example.com/hero1.jpg"],
+      "price": 2499,
+      "rating": 4.5,
+      "numberOfReviews": 42,
+      "products": [ { "_id": "...", "name": "...", "landingSection": "hero", ... } ]
+    },
+    "best_collections": [ { "_id": "...", "landingSection": "best_collections", ... } ],
+    "elevate_look": [ { "_id": "...", "landingSection": "elevate_look", ... } ],
+    "fresh_styles": [ { "_id": "...", "landingSection": "fresh_styles", ... } ]
+  }
 }
 ```
 
 ---
 
-## 4. Best collections section
+## `landingSection` enum values
 
-### Create (only if section does not exist)
-
-**POST** `/admin/landing/best-collections`
-
-```bash
-curl --location 'https://api.pursolina.com/api/admin/landing/best-collections' \
---header 'Content-Type: application/json' \
---header 'Authorization: Bearer YOUR_ADMIN_TOKEN' \
---data '{
-  "order": 1,
-  "is_active": true,
-  "products": [
-    {
-      "product": "PRODUCT_MONGO_ID",
-      "images": ["https://example.com/p1.jpg"],
-      "price": 1999,
-      "originalPrice": 2499,
-      "rating": 4.2,
-      "numberOfReviews": 18,
-      "tags": ["bestseller"],
-      "colors": [{ "colorCode": "#000", "images": "https://example.com/p1.jpg" }]
-    }
-  ]
-}'
-```
-
-**Response (200):**
-```json
-{
-  "message": "Best collections section created.",
-  "data": { "_id": "...", "sectionKey": "best_collections", "order": 1, "products": [...] }
-}
-```
-
-### Update best collections
-
-**PUT** `/admin/landing/best-collections`
-
-```bash
-curl --location --request PUT 'https://api.pursolina.com/api/admin/landing/best-collections' \
---header 'Content-Type: application/json' \
---header 'Authorization: Bearer YOUR_ADMIN_TOKEN' \
---data '{
-  "order": 1,
-  "is_active": true,
-  "products": [
-    {
-      "product": "PRODUCT_MONGO_ID",
-      "images": ["https://example.com/p1.jpg"],
-      "price": 1999,
-      "originalPrice": 2499,
-      "rating": 4.2,
-      "numberOfReviews": 18,
-      "tags": ["bestseller"],
-      "colors": []
-    }
-  ]
-}'
-```
-
-**Response (200):**
-```json
-{
-  "message": "Best collections section updated.",
-  "data": { "_id": "...", "sectionKey": "best_collections", "products": [...] }
-}
-```
-
----
-
-## 5. Elevate look section (exactly 4 products)
-
-### Create
-
-**POST** `/admin/landing/elevate-look`
-
-```bash
-curl --location 'https://api.pursolina.com/api/admin/landing/elevate-look' \
---header 'Content-Type: application/json' \
---header 'Authorization: Bearer YOUR_ADMIN_TOKEN' \
---data '{
-  "order": 2,
-  "products": [
-    { "product": "ID1", "images": ["url1"], "price": 1999, "originalPrice": null, "rating": 4, "numberOfReviews": 10, "tags": [], "colors": [] },
-    { "product": "ID2", "images": ["url2"], "price": 2199, "originalPrice": null, "rating": 4.2, "numberOfReviews": 8, "tags": [], "colors": [] },
-    { "product": "ID3", "images": ["url3"], "price": 1899, "originalPrice": null, "rating": 4.5, "numberOfReviews": 12, "tags": [], "colors": [] },
-    { "product": "ID4", "images": ["url4"], "price": 2399, "originalPrice": null, "rating": 4.1, "numberOfReviews": 6, "tags": [], "colors": [] }
-  ]
-}'
-```
-
-**Response (200):**
-```json
-{
-  "message": "Elevate look section created.",
-  "data": { "_id": "...", "sectionKey": "elevate_look", "products": [/* 4 items */] }
-}
-```
-
-### Update
-
-**PUT** `/admin/landing/elevate-look`
-
-```bash
-curl --location --request PUT 'https://api.pursolina.com/api/admin/landing/elevate-look' \
---header 'Content-Type: application/json' \
---header 'Authorization: Bearer YOUR_ADMIN_TOKEN' \
---data '{
-  "order": 2,
-  "products": [
-    { "product": "ID1", "images": ["url1"], "price": 1999, "originalPrice": null, "rating": 4, "numberOfReviews": 10, "tags": [], "colors": [] },
-    { "product": "ID2", "images": ["url2"], "price": 2199, "originalPrice": null, "rating": 4.2, "numberOfReviews": 8, "tags": [], "colors": [] },
-    { "product": "ID3", "images": ["url3"], "price": 1899, "originalPrice": null, "rating": 4.5, "numberOfReviews": 12, "tags": [], "colors": [] },
-    { "product": "ID4", "images": ["url4"], "price": 2399, "originalPrice": null, "rating": 4.1, "numberOfReviews": 6, "tags": [], "colors": [] }
-  ]
-}'
-```
-
-**Response (200):**
-```json
-{
-  "message": "Elevate look section updated.",
-  "data": { "_id": "...", "sectionKey": "elevate_look", "products": [...] }
-}
-```
-
----
-
-## 6. Fresh styles section
-
-### Create
-
-**POST** `/admin/landing/fresh-styles`
-
-```bash
-curl --location 'https://api.pursolina.com/api/admin/landing/fresh-styles' \
---header 'Content-Type: application/json' \
---header 'Authorization: Bearer YOUR_ADMIN_TOKEN' \
---data '{
-  "order": 3,
-  "is_active": true,
-  "products": [
-    {
-      "product": "PRODUCT_MONGO_ID",
-      "images": ["https://example.com/p1.jpg"],
-      "price": 1799,
-      "originalPrice": 2199,
-      "rating": 4.0,
-      "numberOfReviews": 25,
-      "tags": ["trending"],
-      "colors": []
-    }
-  ]
-}'
-```
-
-**Response (200):**
-```json
-{
-  "message": "Fresh styles section created.",
-  "data": { "_id": "...", "sectionKey": "fresh_styles", "order": 3, "products": [...] }
-}
-```
-
-### Update
-
-**PUT** `/admin/landing/fresh-styles`
-
-```bash
-curl --location --request PUT 'https://api.pursolina.com/api/admin/landing/fresh-styles' \
---header 'Content-Type: application/json' \
---header 'Authorization: Bearer YOUR_ADMIN_TOKEN' \
---data '{
-  "order": 3,
-  "is_active": true,
-  "products": [
-    { "product": "ID1", "images": ["url1"], "price": 1799, "originalPrice": 2199, "rating": 4, "numberOfReviews": 25, "tags": ["trending"], "colors": [] }
-  ]
-}'
-```
-
-**Response (200):**
-```json
-{
-  "message": "Fresh styles section updated.",
-  "data": { "_id": "...", "sectionKey": "fresh_styles", "products": [...] }
-}
-```
-
----
-
-## Product item shape (for products array)
-
-**Flow: Create products first via Admin - Product Add** (with name, slug, description, colorVariants, dimensions, etc. for the product detail page), then use each product’s `_id` in landing section APIs. Do **not** send `name` in landing product items.
-
-Each item in `products` must have:
-
-| Field            | Type     | Required | Notes |
-|-----------------|----------|----------|--------|
-| `product`       | string   | **Yes**  | 24-character hex MongoDB ObjectId from an existing product. Create via **POST** `/admin/product/add` first; use response `data._id`. |
-| `images`        | string[] | No       | Image URLs for the card (optional override) |
-| `price`         | number   | No       | Display price |
-| `originalPrice`| number   | No       | Strikethrough price |
-| `rating`        | number   | No       | 0–5 |
-| `numberOfReviews` | number | No       | Count |
-| `tags`          | string[] | No       | `bestseller`, `hot`, `trending`, `sale` |
-| `colors`        | array    | No       | `[{ "colorCode": "#hex", "images": ["url1", "url2"], "default": true }]` — `images` is an **array of strings**; one color can have `"default": true`. |
+| Value | Display Name |
+|---|---|
+| `"hero"` | Hero |
+| `"best_collections"` | Best Collections |
+| `"elevate_look"` | Elevate Look |
+| `"fresh_styles"` | Fresh Styles |
+| `null` | (not on landing page) |
 
 ---
 
@@ -385,39 +296,17 @@ Each item in `products` must have:
 
 - **400** – Validation error: `{ "message": "error detail" }`
 - **401** – Missing or invalid admin token
-- **404** – Section not found (e.g. wrong id in section/update/:id)
+- **404** – Product / section not found
 - **409** – Section already exists (use update instead of create)
 - **500** – `{ "message": "Server error.", "error": "..." }`
 
 ---
 
-## Prompt for admin panel (copy-paste)
+## Admin panel integration prompt
 
-Use this prompt when building or wiring the landing-page section in the admin panel:
-
----
-
-**Landing page – Admin panel integration**
-
-- **Base URL:** `https://api.pursolina.com/api`. All requests need header: `Authorization: Bearer <admin_token>` (from admin login).
-- **Load data:** On landing/settings page load, call **GET** `/admin/landing`. Response has `data.hero`, `data.best_collections`, `data.elevate_look`, `data.fresh_styles`. Each section has `_id`, `sectionKey`, `order`, `is_active`, and for hero: `images`, `price`, `rating`, `numberOfReviews`; for the other three: `products` (array of items with `product` id, `images`, `price`, `originalPrice`, `rating`, `numberOfReviews`, `tags`, `colors`). Use these to prefill forms and to decide create vs update.
-- **Hero:** One block. If `data.hero` exists, show edit form and on save call **PUT** `/admin/landing/hero` with body `{ images[], price, rating, numberOfReviews }`. If no hero, show “Create hero” and call **POST** `/admin/landing/hero` with same body.
-- **Best collections:** List of products. If `data.best_collections` exists, on save call **PUT** `/admin/landing/best-collections` with body `{ order?, is_active?, products[] }`. Each product: `{ product? (Mongo id), images[], price?, originalPrice?, rating?, numberOfReviews?, tags?, colors[] }`. If section doesn’t exist, use **POST** `/admin/landing/best-collections` with same body.
-- **Elevate look:** Exactly 4 products. If section exists, on save **PUT** `/admin/landing/elevate-look` with `{ order?, products[] }` (4 items). If not, **POST** `/admin/landing/elevate-look` with same. Product shape same as above.
-- **Fresh styles:** Same as best collections (multiple products). **PUT** or **POST** `/admin/landing/fresh-styles` with `{ order?, is_active?, products[] }`.
-- **Generic section update:** To patch any section by id (e.g. only `order` or `is_active`), use **PUT** `/admin/landing/section/update/:id` with body containing only the fields to update. `id` = section `_id` from GET response.
-- **Create product first:** For each card, create a product via **POST** `/admin/product/add` with full payload (name, slug, shortDescription, description, category, price, salePrice, image, tags, colorVariants with multiple images and default, dimensions, averageRating, numberOfReviews). Then use the returned `data._id` as `products[].product` in Best Collections / Fresh Styles / Elevate Look. Do **not** send `name` (or any product-creation fields) in landing payloads.
-- **Product required:** Each `products[]` item must include `product` (valid 24-char hex ObjectId of an existing product). Missing or invalid `product` returns **400**.
-- **Colors per product:** Each product item can have `colors: [{ colorCode, images: ["url1","url2"], default: true }]`. `images` is an **array of strings**. Set `default: true` on one color if needed.
-- **Errors:** Show `response.data.message` or `response.message` on 4xx/5xx. 400 = missing/invalid product id or product not found. 409 = “Section already exists, use update”.
-
----
-
-## How add/update APIs work (short prompt)
-
-- **Create (POST):** Use when the section does not exist. **POST** `/admin/landing/hero`, `/admin/landing/best-collections`, `/admin/landing/elevate-look`, or `/admin/landing/fresh-styles`. If section already exists, API returns **409** — use Update instead.
-- **Update (PUT):** Use when section exists (from **GET** `/admin/landing`). **PUT** same path with full or partial body. Send full `products` array; each item must have valid `product` id.
-- **Product ID:** For each `products[]` item, `product` is **required** and must be a **24-character hex ObjectId** of an existing product. Create products via **Admin - Product Add** first; do not send `name` in landing payloads.
-- **Payload shape:** Example for best_collections / fresh_styles: `{ "order": 1, "is_active": true, "products": [ { "product": "<24-char-product-id>", "images": ["url"], "price": 3162, "originalPrice": 3661, "rating": 4.1, "numberOfReviews": 64, "tags": ["bestseller"], "colors": [ { "colorCode": "#374151", "images": ["url1"], "default": true } ] } ] }`.
-
----
+- **Base URL:** `https://api.pursolina.com/api`. All requests need header: `Authorization: Bearer <admin_token>`.
+- **List all products:** **GET** `/admin/product/list`. Supports query params: `page`, `limit`, `category`, `tag`, `landingSection` (`hero`/`best_collections`/`elevate_look`/`fresh_styles`), `is_active`.
+- **Assign to landing section:** On a product card/row show a dropdown with options: None, Hero, Best Collections, Elevate Look, Fresh Styles. On change call **PUT** `/admin/product/update/:id` with `{ "landingSection": "<value or null>" }`.
+- **Landing page data:** **GET** `/admin/landing` returns all four sections with their currently-assigned products and section config. Use to preview the landing page from admin.
+- **Hero banner config:** Use **POST** `/admin/landing/hero` (first time) or **PUT** `/admin/landing/hero` to set `images`, `price`, `rating`, `numberOfReviews` for the hero banner independently from products.
+- **Section order/visibility:** Use **PUT** `/admin/landing/section/update/:id` to toggle `is_active` or change `order` for any section.

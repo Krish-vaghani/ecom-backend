@@ -64,7 +64,13 @@
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "10" },
                 { "key": "category", "value": "jwellery", "description": "jwellery | purse" },
-                { "key": "tag", "value": "bestseller", "description": "bestseller | hot | trending | sale" }
+                { "key": "tag", "value": "bestseller", "description": "bestseller | hot | trending | sale" },
+                {
+                  "key": "landingSection",
+                  "value": "best_collections",
+                  "disabled": true,
+                  "description": "hero | best_collections | elevate_look | fresh_styles"
+                }
               ]
             }
           }
@@ -446,6 +452,35 @@
           "name": "Admin Product",
           "item": [
             {
+              "name": "List Products",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/product/list?page=1&limit=10&landingSection=best_collections",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "admin", "product", "list"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" },
+                    {
+                      "key": "landingSection",
+                      "value": "best_collections",
+                      "disabled": true,
+                      "description": "hero | best_collections | elevate_look | fresh_styles"
+                    },
+                    {
+                      "key": "is_active",
+                      "value": "true",
+                      "disabled": true,
+                      "description": "true | false"
+                    }
+                  ]
+                },
+                "description": "Admin list shows all products (active + inactive). Supports category/tag/landingSection/is_active filters."
+              }
+            },
+            {
               "name": "Add Product",
               "request": {
                 "method": "POST",
@@ -455,7 +490,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"Product Name\",\n  \"slug\": \"product-slug\",\n  \"description\": \"\",\n  \"price\": 999,\n  \"salePrice\": null,\n  \"category\": \"jwellery\",\n  \"image\": null,\n  \"tags\": [\"bestseller\"],\n  \"colorVariants\": [],\n  \"shortDescription\": \"\",\n  \"dimensions\": { \"heightCm\": 10, \"widthCm\": 5, \"depthCm\": 2 },\n  \"averageRating\": 0,\n  \"numberOfReviews\": 0,\n  \"isFeatured\": false,\n  \"is_active\": true\n}"
+                  "raw": "{\n  \"name\": \"Product Name\",\n  \"slug\": \"product-slug\",\n  \"description\": \"\",\n  \"price\": 999,\n  \"salePrice\": null,\n  \"category\": \"jwellery\",\n  \"image\": null,\n  \"landingSection\": null,\n  \"tags\": [\"bestseller\"],\n  \"colorVariants\": [],\n  \"shortDescription\": \"\",\n  \"dimensions\": { \"heightCm\": 10, \"widthCm\": 5, \"depthCm\": 2 },\n  \"averageRating\": 0,\n  \"numberOfReviews\": 0,\n  \"isFeatured\": false,\n  \"is_active\": true\n}"
                 },
                 "url": "{{baseUrl}}/api/admin/product/add",
                 "description": "category: jwellery | purse; tags: bestseller | hot | trending | sale"
@@ -471,7 +506,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"Updated Name\",\n  \"price\": 899\n}"
+                  "raw": "{\n  \"name\": \"Updated Name\",\n  \"price\": 899,\n  \"landingSection\": \"best_collections\"\n}"
                 },
                 "url": "{{baseUrl}}/api/admin/product/update/:id"
               }

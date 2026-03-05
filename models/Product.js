@@ -32,6 +32,11 @@ const ProductSchema = new mongoose.Schema(
     averageRating: { type: Number, default: null, min: 0, max: 5 },
     numberOfReviews: { type: Number, default: 0 },
     viewCount: { type: Number, default: 0 },
+    landingSection: {
+      type: String,
+      default: null,
+      enum: [null, "hero", "best_collections", "elevate_look", "fresh_styles"],
+    },
     is_active: { type: Boolean, default: true },
   },
   { timestamps: true }

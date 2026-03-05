@@ -137,30 +137,62 @@ const PRODUCT_ARRAY_KEYS = [
   FRESH_STYLES_SECTION_KEY,
 ];
 
-/** Public API: returns landing data. For hero: single object. For best_collections, elevate_look, fresh_styles: direct array of products. */
+/**
+ * Public API: returns landing data.
+ * Products are fetched from the Product collection by their `landingSection` field.
+ * Hero section also includes section-level config (images, price, rating) from LandingSection doc.
+ */
 export const GetAllLandingPageData = async (req, res) => {
   try {
+    // Section-level config (order, is_active, hero images/price/rating)
     const sections = await LandingSection.find({
       is_active: true,
       sectionKey: { $in: LANDING_SECTION_KEYS },
     })
       .sort({ order: 1 })
       .lean();
-    const data = {};
-    for (const section of sections) {
-      if (PRODUCT_ARRAY_KEYS.includes(section.sectionKey)) {
-        data[section.sectionKey] = Array.isArray(section.products) ? section.products : [];
-      } else {
-        data[section.sectionKey] = section;
-      }
+
+    const sectionConfigs = {};
+    for (const s of sections) sectionConfigs[s.sectionKey] = s;
+
+    // Products assigned to any landing section
+    const landingProducts = await Product.find({
+      is_active: true,
+      landingSection: { $in: LANDING_SECTION_KEYS },
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const productsBySection = {};
+    for (const key of LANDING_SECTION_KEYS) productsBySection[key] = [];
+    for (const p of landingProducts) {
+      if (p.landingSection) productsBySection[p.landingSection].push(p);
     }
+
+    const data = {};
+
+    // Hero: merge section config with products array
+    const heroConfig = sectionConfigs[HERO_SECTION_KEY] || null;
+    const heroProducts = productsBySection[HERO_SECTION_KEY] || [];
+    if (heroConfig || heroProducts.length > 0) {
+      data[HERO_SECTION_KEY] = { ...(heroConfig || {}), products: heroProducts };
+    }
+
+    // best_collections, elevate_look, fresh_styles: direct products array
+    for (const key of PRODUCT_ARRAY_KEYS) {
+      data[key] = productsBySection[key] || [];
+    }
+
     return res.status(200).json({ message: "Landing page data fetched.", data });
   } catch (err) {
     return res.status(500).json({ message: "Server error.", error: err.message });
   }
 };
 
-/** Admin API: returns full section documents (with _id, order, is_active, products) so admin can bind create/update APIs. */
+/**
+ * Admin API: returns section configs + products from Product collection per section.
+ * Shows all products (active + inactive) assigned to each landing section.
+ */
 export const GetAdminLandingPageData = async (req, res) => {
   try {
     const sections = await LandingSection.find({
@@ -168,10 +200,32 @@ export const GetAdminLandingPageData = async (req, res) => {
     })
       .sort({ order: 1 })
       .lean();
-    const data = {};
-    for (const section of sections) {
-      data[section.sectionKey] = section;
+
+    const sectionConfigs = {};
+    for (const s of sections) sectionConfigs[s.sectionKey] = s;
+
+    // All products (active + inactive) assigned to a landing section
+    const landingProducts = await Product.find({
+      landingSection: { $in: LANDING_SECTION_KEYS },
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const productsBySection = {};
+    for (const key of LANDING_SECTION_KEYS) productsBySection[key] = [];
+    for (const p of landingProducts) {
+      if (p.landingSection) productsBySection[p.landingSection].push(p);
     }
+
+    const data = {};
+    for (const key of LANDING_SECTION_KEYS) {
+      data[key] = {
+        ...(sectionConfigs[key] || {}),
+        sectionKey: key,
+        products: productsBySection[key] || [],
+      };
+    }
+
     return res.status(200).json({ message: "Landing page data fetched.", data });
   } catch (err) {
     return res.status(500).json({ message: "Server error.", error: err.message });

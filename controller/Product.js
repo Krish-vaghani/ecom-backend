@@ -17,12 +17,48 @@ export const AddProduct = async (req, res) => {
   }
 };
 
+const LANDING_SECTION_VALUES = ["hero", "best_collections", "elevate_look", "fresh_styles"];
+
 export const ListProduct = async (req, res) => {
   try {
-    const { category, tag, page = 1, limit = 10 } = req.query;
+    const { category, tag, landingSection, page = 1, limit = 10 } = req.query;
     const filter = { is_active: true };
     if (category && ["jwellery", "purse"].includes(category)) filter.category = category;
     if (tag && ["bestseller", "hot", "trending", "sale"].includes(tag)) filter.tags = tag;
+    if (landingSection && LANDING_SECTION_VALUES.includes(landingSection))
+      filter.landingSection = landingSection;
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const [products, total] = await Promise.all([
+      Product.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).lean(),
+      Product.countDocuments(filter),
+    ]);
+
+    return res.status(200).json({
+      message: "Products fetched.",
+      data: products,
+      total,
+      page: Number(page),
+      limit: Number(limit),
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Server error.", error: err.message });
+  }
+};
+
+/**
+ * Admin product listing – shows ALL products (active + inactive).
+ * Supports filters: category, tag, landingSection, is_active, page, limit.
+ */
+export const AdminListProduct = async (req, res) => {
+  try {
+    const { category, tag, landingSection, is_active, page = 1, limit = 10 } = req.query;
+    const filter = {};
+    if (is_active !== undefined) filter.is_active = is_active === "true";
+    if (category && ["jwellery", "purse"].includes(category)) filter.category = category;
+    if (tag && ["bestseller", "hot", "trending", "sale"].includes(tag)) filter.tags = tag;
+    if (landingSection && LANDING_SECTION_VALUES.includes(landingSection))
+      filter.landingSection = landingSection;
 
     const skip = (Number(page) - 1) * Number(limit);
     const [products, total] = await Promise.all([

@@ -56,7 +56,13 @@
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "10" },
                 { "key": "category", "value": "purse", "disabled": true },
-                { "key": "tag", "value": "bestseller", "disabled": true }
+                { "key": "tag", "value": "bestseller", "disabled": true },
+                {
+                  "key": "landingSection",
+                  "value": "best_collections",
+                  "disabled": true,
+                  "description": "hero | best_collections | elevate_look | fresh_styles"
+                }
               ]
             }
           }
@@ -378,6 +384,35 @@
       "name": "Admin - Product",
       "item": [
         {
+          "name": "Admin - Product List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/admin/product/list?page=1&limit=10&landingSection=best_collections",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "product", "list"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                {
+                  "key": "landingSection",
+                  "value": "best_collections",
+                  "disabled": true,
+                  "description": "hero | best_collections | elevate_look | fresh_styles"
+                },
+                {
+                  "key": "is_active",
+                  "value": "true",
+                  "disabled": true,
+                  "description": "true | false"
+                }
+              ]
+            },
+            "description": "Admin list shows all products (active + inactive). Supports category/tag/landingSection/is_active filters."
+          }
+        },
+        {
           "name": "Admin - Product Add",
           "request": {
             "method": "POST",
@@ -387,7 +422,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Classic Leather Crossbody Bag\",\n  \"slug\": \"classic-leather-crossbody-bag\",\n  \"shortDescription\": \"Compact tote with spacious interior\",\n  \"description\": \"Designed for everyday elegance. Crafted for women who love minimal style with maximum utility. Compact from outside yet thoughtfully spacious inside, perfect for daily outings, brunches, shopping, or casual workdays. Soft textures, subtle detailing, and a timeless silhouette.\",\n  \"category\": \"purse\",\n  \"price\": 3661,\n  \"salePrice\": 3162,\n  \"image\": \"https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d\",\n  \"tags\": [\"bestseller\", \"sale\"],\n  \"colorVariants\": [\n    {\n      \"colorCode\": \"#374151\",\n      \"colorName\": \"\",\n      \"images\": [\n        \"https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d\",\n        \"https://images.unsplash.com/photo-1591561954557-26941169b49e\"\n      ],\n      \"default\": true\n    },\n    {\n      \"colorCode\": \"#000000\",\n      \"colorName\": \"\",\n      \"images\": [\"https://images.unsplash.com/photo-1584917865442-de89df76afd3\"],\n      \"default\": false\n    },\n    {\n      \"colorCode\": \"#8B4513\",\n      \"colorName\": \"\",\n      \"images\": [\"https://images.unsplash.com/photo-1553062407-98eeb64c6a62\"],\n      \"default\": false\n    }\n  ],\n  \"dimensions\": { \"heightCm\": 19, \"widthCm\": 26, \"depthCm\": 6 },\n  \"averageRating\": 4.1,\n  \"numberOfReviews\": 64,\n  \"is_active\": true\n}"
+              "raw": "{\n  \"name\": \"Classic Leather Crossbody Bag\",\n  \"slug\": \"classic-leather-crossbody-bag\",\n  \"shortDescription\": \"Compact tote with spacious interior\",\n  \"description\": \"Designed for everyday elegance. Crafted for women who love minimal style with maximum utility. Compact from outside yet thoughtfully spacious inside, perfect for daily outings, brunches, shopping, or casual workdays. Soft textures, subtle detailing, and a timeless silhouette.\",\n  \"category\": \"purse\",\n  \"price\": 3661,\n  \"salePrice\": 3162,\n  \"image\": \"https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d\",\n  \"landingSection\": null,\n  \"tags\": [\"bestseller\", \"sale\"],\n  \"colorVariants\": [\n    {\n      \"colorCode\": \"#374151\",\n      \"colorName\": \"\",\n      \"images\": [\n        \"https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d\",\n        \"https://images.unsplash.com/photo-1591561954557-26941169b49e\"\n      ],\n      \"default\": true\n    },\n    {\n      \"colorCode\": \"#000000\",\n      \"colorName\": \"\",\n      \"images\": [\"https://images.unsplash.com/photo-1584917865442-de89df76afd3\"],\n      \"default\": false\n    },\n    {\n      \"colorCode\": \"#8B4513\",\n      \"colorName\": \"\",\n      \"images\": [\"https://images.unsplash.com/photo-1553062407-98eeb64c6a62\"],\n      \"default\": false\n    }\n  ],\n  \"dimensions\": { \"heightCm\": 19, \"widthCm\": 26, \"depthCm\": 6 },\n  \"averageRating\": 4.1,\n  \"numberOfReviews\": 64,\n  \"is_active\": true\n}"
             },
             "url": "{{base_url}}/admin/product/add",
             "description": "Create product first. Use response data._id in landing APIs (Best Collections, Fresh Styles, Elevate Look). Full payload supports product detail page: name, slug, description, colorVariants (multiple images, default), dimensions, etc."
@@ -403,7 +438,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Name\",\n  \"price\": 3199\n}"
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"price\": 3199,\n  \"landingSection\": \"best_collections\"\n}"
             },
             "url": "{{base_url}}/admin/product/update/{{product_id}}"
           }

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { AddProduct, UpdateProduct, DeleteProduct } from "../../controller/Product.js";
+import { AddProduct, AdminListProduct, UpdateProduct, DeleteProduct } from "../../controller/Product.js";
 import {
   UpdateSection,
   CreateHeroSection,
@@ -44,6 +44,7 @@ router.post("/admin/auth/login", AdminLogin);
 router.post("/admin/upload/image", ...adminAuth, upload.single("image"), UploadImage);
 
 // Product (admin CRUD)
+router.get("/admin/product/list", ...adminAuth, AdminListProduct);
 router.post("/admin/product/add", ...adminAuth, AddProduct);
 router.put("/admin/product/update/:id", ...adminAuth, UpdateProduct);
 router.delete("/admin/product/delete/:id", ...adminAuth, DeleteProduct);

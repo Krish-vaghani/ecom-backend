@@ -35,6 +35,10 @@ export const ProductValidator = Joi.object({
   }).optional(),
   averageRating: Joi.number().min(0).max(5).optional(),
   numberOfReviews: Joi.number().min(0).optional(),
+  landingSection: Joi.string()
+    .valid("hero", "best_collections", "elevate_look", "fresh_styles")
+    .allow(null)
+    .optional(),
   isFeatured: Joi.boolean().optional(),
   is_active: Joi.boolean().optional(),
 });
@@ -59,6 +63,10 @@ export const UpdateProductValidator = Joi.object({
   }).optional(),
   averageRating: Joi.number().min(0).max(5).optional(),
   numberOfReviews: Joi.number().min(0).optional(),
+  landingSection: Joi.string()
+    .valid("hero", "best_collections", "elevate_look", "fresh_styles")
+    .allow(null)
+    .optional(),
   isFeatured: Joi.boolean().optional(),
   is_active: Joi.boolean().optional(),
 }).min(1);
