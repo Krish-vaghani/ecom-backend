@@ -263,21 +263,25 @@ async function seedProducts() {
           colorCode: "#B0C4DE",
           colorName: "Slate Blue",
           images: pickRandomImagesForColor(i),
+          default: true,
         },
         {
           colorCode: "#000000",
           colorName: "Black",
           images: pickRandomImagesForColor(i + 5),
+          default: false,
         },
         {
           colorCode: "#8B4513",
           colorName: "Brown",
           images: pickRandomImagesForColor(i + 3),
+          default: false,
         },
         {
           colorCode: "#DEB887",
           colorName: "Blush",
           images: pickRandomImagesForColor(i + 7),
+          default: false,
         },
       ],
       dimensions: { heightCm, widthCm, depthCm },
@@ -293,6 +297,8 @@ async function seedProducts() {
   console.log("Products: inserted", inserted.length);
   return inserted;
 }
+
+export { seedProducts, seedProductReviews };
 
 async function seedProductReviews(products) {
   await ProductReview.deleteMany({});
@@ -557,4 +563,4 @@ async function run() {
   }
 }
 
-run();
+if (process.argv[1]?.includes("seed-dummy-data")) run();

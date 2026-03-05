@@ -1,5 +1,6 @@
 import { FindOne, SingleRecordOperation } from "../helper/commonquery.js";
 import LandingSection from "../models/LandingSection.js";
+import Product from "../models/Product.js";
 import {
   UpdateLandingSectionValidate,
   HeroSectionValidate,
@@ -17,16 +18,88 @@ function isValidObjectId(id) {
   return s.length === 24 && /^[a-fA-F0-9]{24}$/.test(s);
 }
 
+function slugifyName(name) {
+  return String(name || "Landing Product")
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+}
+
 /**
- * Normalize products array for landing sections so Mongoose can cast:
- * - product: set to null if not a valid 24-char hex ObjectId
- * - colors[].images: ensure array; colors[].default: ensure boolean
+ * Ensure every landing product item has a valid Product reference.
+ * If product id is missing/invalid or product not found, create a new Product
+ * using landing data (images, price, tags, colors) and set item.product to that id.
+ * Also normalizes colors[].images to array and colors[].default to boolean.
  */
-function normalizeLandingProducts(products) {
-  if (!Array.isArray(products)) return [];
-  return products.map((p) => {
+async function ensureLandingProducts(rawProducts) {
+  if (!Array.isArray(rawProducts)) return [];
+
+  const result = [];
+  for (const p of rawProducts) {
     const item = { ...p };
-    item.product = isValidObjectId(p.product) ? p.product : null;
+
+    let productId = item.product;
+    if (productId && isValidObjectId(productId)) {
+      const existing = await Product.findOne({ _id: productId, is_active: true })
+        .select("_id")
+        .lean();
+      if (!existing) {
+        productId = null;
+      }
+    } else {
+      productId = null;
+    }
+
+    if (!productId) {
+      const baseName = item.name || "Landing Product";
+      const slugBase = slugifyName(baseName);
+
+      const imagesArr = Array.isArray(item.images) ? item.images : [];
+      let mainImage = imagesArr[0] || null;
+      if (!mainImage && Array.isArray(item.colors) && item.colors.length > 0) {
+        const firstColorImages = item.colors[0]?.images;
+        if (Array.isArray(firstColorImages) && firstColorImages[0]) {
+          mainImage = firstColorImages[0];
+        }
+      }
+
+      const price =
+        item.price != null
+          ? item.price
+          : item.originalPrice != null
+          ? item.originalPrice
+          : 0;
+
+      const colorVariants = Array.isArray(item.colors)
+        ? item.colors.map((c, idx) => ({
+            colorCode: c.colorCode || null,
+            colorName: "",
+            images: Array.isArray(c.images) ? c.images : [],
+            default: idx === 0,
+          }))
+        : [];
+
+      const newProduct = await Product.create({
+        name: baseName,
+        slug: `${slugBase}-${Date.now().toString(36)}`,
+        shortDescription: "",
+        description: "",
+        category: "purse",
+        price,
+        salePrice:
+          item.originalPrice != null && item.originalPrice > price ? price : null,
+        image: mainImage,
+        tags: item.tags || [],
+        colorVariants,
+        dimensions: {},
+        averageRating: item.rating ?? null,
+        numberOfReviews: item.numberOfReviews ?? 0,
+        is_active: true,
+      });
+
+      item.product = newProduct._id;
+    }
+
     if (Array.isArray(item.colors)) {
       item.colors = item.colors.map((c) => ({
         colorCode: c.colorCode != null ? String(c.colorCode) : "",
@@ -34,8 +107,11 @@ function normalizeLandingProducts(products) {
         default: Boolean(c.default),
       }));
     }
-    return item;
-  });
+
+    result.push(item);
+  }
+
+  return result;
 }
 const BEST_COLLECTIONS_SECTION_KEY = "best_collections";
 const ELEVATE_LOOK_SECTION_KEY = "elevate_look";
@@ -108,7 +184,9 @@ export const UpdateSection = async (req, res) => {
     }
 
     const body = { ...req.body };
-    if (Array.isArray(body.products)) body.products = normalizeLandingProducts(body.products);
+    if (Array.isArray(body.products)) {
+      body.products = await ensureLandingProducts(body.products);
+    }
     const result = await SingleRecordOperation("u", LandingSection, { _id: id, ...body });
     return res.status(result.status).json({ message: "Section updated.", data: result.data });
   } catch (err) {
@@ -186,11 +264,13 @@ export const CreateBestCollectionsSection = async (req, res) => {
       return res.status(409).json({ message: "Best collections section already exists. Use update instead." });
     }
 
+    const products = await ensureLandingProducts(req.body.products || []);
+
     const payload = {
       sectionKey: BEST_COLLECTIONS_SECTION_KEY,
       order: req.body.order ?? 0,
       is_active: req.body.is_active ?? true,
-      products: normalizeLandingProducts(req.body.products),
+      products,
     };
     const result = await SingleRecordOperation("i", LandingSection, payload);
     return res.status(result.status).json({ message: "Best collections section created.", data: result.data });
@@ -214,7 +294,9 @@ export const UpdateBestCollectionsSection = async (req, res) => {
     const updateData = {};
     if (req.body.order !== undefined) updateData.order = req.body.order;
     if (req.body.is_active !== undefined) updateData.is_active = req.body.is_active;
-    if (req.body.products !== undefined) updateData.products = normalizeLandingProducts(req.body.products);
+    if (req.body.products !== undefined) {
+      updateData.products = await ensureLandingProducts(req.body.products);
+    }
 
     const result = await SingleRecordOperation("u", LandingSection, {
       _id: exist.data._id,
@@ -234,17 +316,23 @@ export const CreateElevateLookSection = async (req, res) => {
   }
 
   try {
-    const existing = await FindOne(LandingSection, { sectionKey: ELEVATE_LOOK_SECTION_KEY });
+    const existing = await FindOne(LandingSection, {
+      sectionKey: ELEVATE_LOOK_SECTION_KEY,
+    });
     if (existing.status === 200) {
       return res.status(409).json({ message: "Elevate look section already exists. Use update instead." });
     }
 
-    const raw = Array.isArray(req.body.products) && req.body.products.length === 4 ? req.body.products : [];
+    const raw =
+      Array.isArray(req.body.products) && req.body.products.length === 4
+        ? req.body.products
+        : [];
+    const products = await ensureLandingProducts(raw);
     const payload = {
       sectionKey: ELEVATE_LOOK_SECTION_KEY,
       order: req.body.order ?? 0,
       is_active: true,
-      products: normalizeLandingProducts(raw),
+      products,
     };
     const result = await SingleRecordOperation("i", LandingSection, payload);
     return res.status(result.status).json({ message: "Elevate look section created.", data: result.data });
@@ -267,7 +355,9 @@ export const UpdateElevateLookSection = async (req, res) => {
 
     const updateData = {};
     if (req.body.order !== undefined) updateData.order = req.body.order;
-    if (req.body.products !== undefined) updateData.products = normalizeLandingProducts(req.body.products);
+    if (req.body.products !== undefined) {
+      updateData.products = await ensureLandingProducts(req.body.products);
+    }
 
     const result = await SingleRecordOperation("u", LandingSection, {
       _id: exist.data._id,
@@ -287,16 +377,20 @@ export const CreateFreshStylesSection = async (req, res) => {
   }
 
   try {
-    const existing = await FindOne(LandingSection, { sectionKey: FRESH_STYLES_SECTION_KEY });
+    const existing = await FindOne(LandingSection, {
+      sectionKey: FRESH_STYLES_SECTION_KEY,
+    });
     if (existing.status === 200) {
       return res.status(409).json({ message: "Fresh styles section already exists. Use update instead." });
     }
+
+    const products = await ensureLandingProducts(req.body.products || []);
 
     const payload = {
       sectionKey: FRESH_STYLES_SECTION_KEY,
       order: req.body.order ?? 0,
       is_active: req.body.is_active ?? true,
-      products: normalizeLandingProducts(req.body.products || []),
+      products,
     };
     const result = await SingleRecordOperation("i", LandingSection, payload);
     return res.status(result.status).json({ message: "Fresh styles section created.", data: result.data });
@@ -320,7 +414,9 @@ export const UpdateFreshStylesSection = async (req, res) => {
     const updateData = {};
     if (req.body.order !== undefined) updateData.order = req.body.order;
     if (req.body.is_active !== undefined) updateData.is_active = req.body.is_active;
-    if (req.body.products !== undefined) updateData.products = normalizeLandingProducts(req.body.products);
+    if (req.body.products !== undefined) {
+      updateData.products = await ensureLandingProducts(req.body.products);
+    }
 
     const result = await SingleRecordOperation("u", LandingSection, {
       _id: exist.data._id,
