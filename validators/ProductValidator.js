@@ -4,6 +4,7 @@ const ColorVariantSchema = Joi.object({
   colorName: Joi.string().allow("").optional(),
   colorCode: Joi.string().allow(null, "").optional(),
   images: Joi.array().items(Joi.string()).optional(),
+  default: Joi.boolean().optional(),
 });
 
 export const ProductValidator = Joi.object({

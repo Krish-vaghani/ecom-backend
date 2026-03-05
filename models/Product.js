@@ -21,6 +21,7 @@ const ProductSchema = new mongoose.Schema(
         colorCode: { type: String, default: null },
         colorName: { type: String, default: "" },
         images: [{ type: String }],
+        default: { type: Boolean, default: false },
       },
     ],
     dimensions: {

@@ -139,10 +139,12 @@ export const GetProductDetail = async (req, res) => {
         ? originalPrice - currentPrice
         : null;
 
-    // Mark first color variant as default (for frontend to know which color to select)
-    const colorVariantsWithDefault = (product.colorVariants || []).map((v, index) => ({
+    // Use stored default flag; if none set, first variant is default
+    const variants = product.colorVariants || [];
+    const hasStoredDefault = variants.some((v) => v.default === true);
+    const colorVariantsWithDefault = variants.map((v, index) => ({
       ...v,
-      default: index === 0,
+      default: hasStoredDefault ? v.default === true : index === 0,
     }));
 
     return res.status(200).json({
