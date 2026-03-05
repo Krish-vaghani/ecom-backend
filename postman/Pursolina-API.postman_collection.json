@@ -11,7 +11,8 @@
     { "key": "admin_token", "value": "", "type": "string" },
     { "key": "product_id", "value": "", "type": "string" },
     { "key": "address_id", "value": "", "type": "string" },
-    { "key": "order_id", "value": "", "type": "string" }
+    { "key": "order_id", "value": "", "type": "string" },
+    { "key": "section_id", "value": "", "type": "string" }
   ],
   "item": [
     {
@@ -386,9 +387,10 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"New Purse\",\n  \"slug\": \"new-purse\",\n  \"shortDescription\": \"Short desc\",\n  \"description\": \"Full description\",\n  \"category\": \"purse\",\n  \"price\": 2999,\n  \"salePrice\": 2499,\n  \"image\": \"https://example.com/image.jpg\",\n  \"tags\": [\"bestseller\"],\n  \"colorVariants\": [\n    { \"colorCode\": \"#000\", \"colorName\": \"Black\", \"images\": [\"https://example.com/1.jpg\"] }\n  ],\n  \"dimensions\": { \"heightCm\": 20, \"widthCm\": 25, \"depthCm\": 8 },\n  \"is_active\": true\n}"
+              "raw": "{\n  \"name\": \"Classic Leather Crossbody Bag\",\n  \"slug\": \"classic-leather-crossbody-bag\",\n  \"shortDescription\": \"Compact tote with spacious interior\",\n  \"description\": \"Designed for everyday elegance. Crafted for women who love minimal style with maximum utility. Compact from outside yet thoughtfully spacious inside, perfect for daily outings, brunches, shopping, or casual workdays. Soft textures, subtle detailing, and a timeless silhouette.\",\n  \"category\": \"purse\",\n  \"price\": 3661,\n  \"salePrice\": 3162,\n  \"image\": \"https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d\",\n  \"tags\": [\"bestseller\", \"sale\"],\n  \"colorVariants\": [\n    {\n      \"colorCode\": \"#374151\",\n      \"colorName\": \"\",\n      \"images\": [\n        \"https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d\",\n        \"https://images.unsplash.com/photo-1591561954557-26941169b49e\"\n      ],\n      \"default\": true\n    },\n    {\n      \"colorCode\": \"#000000\",\n      \"colorName\": \"\",\n      \"images\": [\"https://images.unsplash.com/photo-1584917865442-de89df76afd3\"],\n      \"default\": false\n    },\n    {\n      \"colorCode\": \"#8B4513\",\n      \"colorName\": \"\",\n      \"images\": [\"https://images.unsplash.com/photo-1553062407-98eeb64c6a62\"],\n      \"default\": false\n    }\n  ],\n  \"dimensions\": { \"heightCm\": 19, \"widthCm\": 26, \"depthCm\": 6 },\n  \"averageRating\": 4.1,\n  \"numberOfReviews\": 64,\n  \"is_active\": true\n}"
             },
-            "url": "{{base_url}}/admin/product/add"
+            "url": "{{base_url}}/admin/product/add",
+            "description": "Create product first. Use response data._id in landing APIs (Best Collections, Fresh Styles, Elevate Look). Full payload supports product detail page: name, slug, description, colorVariants (multiple images, default), dimensions, etc."
           }
         },
         {
@@ -559,7 +561,8 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
-            "url": "{{base_url}}/admin/landing"
+            "url": "{{base_url}}/admin/landing",
+            "description": "Returns data.hero, data.best_collections, data.elevate_look, data.fresh_styles. Use section _id for section/update/:id."
           }
         },
         {
@@ -570,8 +573,12 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{admin_token}}" }
             ],
-            "body": { "mode": "raw", "raw": "{}" },
-            "url": "{{base_url}}/admin/landing/section/update/:id"
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order\": 1,\n  \"is_active\": true\n}"
+            },
+            "url": "{{base_url}}/admin/landing/section/update/{{section_id}}",
+            "description": "Replace {{section_id}} with section _id from GET admin/landing. Body can include order, is_active, images, price, products, etc."
           }
         },
         {
@@ -584,7 +591,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"images\": [\"https://example.com/1.jpg\"],\n  \"price\": 2499,\n  \"rating\": 4.5,\n  \"numberOfReviews\": 42\n}"
+              "raw": "{\n  \"images\": [\n    \"https://images.unsplash.com/photo-1548036328-c9fa89d128fa\",\n    \"https://images.unsplash.com/photo-1591561954557-26941169b49e\"\n  ],\n  \"price\": 2499,\n  \"rating\": 4.5,\n  \"numberOfReviews\": 42\n}"
             },
             "url": "{{base_url}}/admin/landing/hero"
           }
@@ -599,7 +606,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"images\": [\"https://example.com/1.jpg\"],\n  \"price\": 2599\n}"
+              "raw": "{\n  \"images\": [\n    \"https://images.unsplash.com/photo-1548036328-c9fa89d128fa\",\n    \"https://images.unsplash.com/photo-1591561954557-26941169b49e\"\n  ],\n  \"price\": 2599,\n  \"rating\": 4.6,\n  \"numberOfReviews\": 50\n}"
             },
             "url": "{{base_url}}/admin/landing/hero"
           }
@@ -614,9 +621,10 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"order\": 1,\n  \"is_active\": true,\n  \"products\": [\n    { \"product\": \"\", \"images\": [], \"price\": 1999, \"originalPrice\": 2499, \"rating\": 4.5, \"numberOfReviews\": 10, \"tags\": [\"bestseller\"], \"colors\": [] }\n  ]\n}"
+              "raw": "{\n  \"order\": 1,\n  \"is_active\": true,\n  \"products\": [\n    {\n      \"product\": \"{{product_id}}\",\n      \"images\": [\"https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d\", \"https://images.unsplash.com/photo-1591561954557-26941169b49e\"],\n      \"price\": 3162,\n      \"originalPrice\": 3661,\n      \"rating\": 4.1,\n      \"numberOfReviews\": 64,\n      \"tags\": [\"bestseller\", \"sale\"],\n      \"colors\": [\n        { \"colorCode\": \"#374151\", \"images\": [\"https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d\"], \"default\": true },\n        { \"colorCode\": \"#000000\", \"images\": [\"https://images.unsplash.com/photo-1584917865442-de89df76afd3\"], \"default\": false }\n      ]\n    }\n  ]\n}"
             },
-            "url": "{{base_url}}/admin/landing/best-collections"
+            "url": "{{base_url}}/admin/landing/best-collections",
+            "description": "Step 1: Create products via Admin - Product Add. Step 2: Use each product's _id in products[].product. product is required; no name field. Card links to product detail page."
           }
         },
         {
@@ -629,7 +637,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"products\": []\n}"
+              "raw": "{\n  \"order\": 1,\n  \"is_active\": true,\n  \"products\": [\n    {\n      \"product\": \"{{product_id}}\",\n      \"images\": [\"https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d\"],\n      \"price\": 3162,\n      \"originalPrice\": 3661,\n      \"rating\": 4.1,\n      \"numberOfReviews\": 64,\n      \"tags\": [\"bestseller\"],\n      \"colors\": [\n        { \"colorCode\": \"#374151\", \"images\": [\"https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d\"], \"default\": true }\n      ]\n    }\n  ]\n}"
             },
             "url": "{{base_url}}/admin/landing/best-collections"
           }
@@ -644,10 +652,10 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"order\": 2,\n  \"products\": [\n    { \"images\": [], \"price\": 1999, \"originalPrice\": null, \"rating\": 4, \"numberOfReviews\": 5, \"tags\": [], \"colors\": [] },\n    { \"images\": [], \"price\": 2199, \"originalPrice\": null, \"rating\": 4.2, \"numberOfReviews\": 8, \"tags\": [], \"colors\": [] },\n    { \"images\": [], \"price\": 1899, \"originalPrice\": null, \"rating\": 4.5, \"numberOfReviews\": 12, \"tags\": [], \"colors\": [] },\n    { \"images\": [], \"price\": 2399, \"originalPrice\": null, \"rating\": 4.1, \"numberOfReviews\": 6, \"tags\": [], \"colors\": [] }\n  ]\n}"
+              "raw": "{\n  \"order\": 2,\n  \"products\": [\n    { \"product\": \"{{product_id}}\", \"images\": [\"https://images.unsplash.com/photo-1548036328-c9fa89d128fa\"], \"price\": 1999, \"originalPrice\": null, \"rating\": 4, \"numberOfReviews\": 10, \"tags\": [\"trending\"], \"colors\": [{ \"colorCode\": \"#374151\", \"images\": [\"https://images.unsplash.com/photo-1548036328-c9fa89d128fa\"], \"default\": true }] },\n    { \"product\": \"{{product_id}}\", \"images\": [\"https://images.unsplash.com/photo-1591561954557-26941169b49e\"], \"price\": 2199, \"originalPrice\": null, \"rating\": 4.2, \"numberOfReviews\": 8, \"tags\": [], \"colors\": [{ \"colorCode\": \"#000000\", \"images\": [\"https://images.unsplash.com/photo-1591561954557-26941169b49e\"], \"default\": true }] },\n    { \"product\": \"{{product_id}}\", \"images\": [\"https://images.unsplash.com/photo-1584917865442-de89df76afd3\"], \"price\": 1899, \"originalPrice\": null, \"rating\": 4.5, \"numberOfReviews\": 12, \"tags\": [\"hot\"], \"colors\": [{ \"colorCode\": \"#8B4513\", \"images\": [\"https://images.unsplash.com/photo-1584917865442-de89df76afd3\"], \"default\": true }] },\n    { \"product\": \"{{product_id}}\", \"images\": [\"https://images.unsplash.com/photo-1553062407-98eeb64c6a62\"], \"price\": 2399, \"originalPrice\": null, \"rating\": 4.1, \"numberOfReviews\": 6, \"tags\": [], \"colors\": [{ \"colorCode\": \"#DEB887\", \"images\": [\"https://images.unsplash.com/photo-1553062407-98eeb64c6a62\"], \"default\": true }] }\n  ]\n}"
             },
             "url": "{{base_url}}/admin/landing/elevate-look",
-            "description": "Exactly 4 products required."
+            "description": "Exactly 4 products. Create 4 products via Admin - Product Add first, then set each products[i].product to the corresponding _id (use 4 different product_id values or duplicate and replace in body)."
           }
         },
         {
@@ -658,7 +666,10 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{admin_token}}" }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"products\": []\n}" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order\": 2,\n  \"products\": [\n    { \"product\": \"{{product_id}}\", \"images\": [\"https://images.unsplash.com/photo-1548036328-c9fa89d128fa\"], \"price\": 1999, \"originalPrice\": null, \"rating\": 4, \"numberOfReviews\": 10, \"tags\": [\"trending\"], \"colors\": [{ \"colorCode\": \"#374151\", \"images\": [\"https://images.unsplash.com/photo-1548036328-c9fa89d128fa\"], \"default\": true }] },\n    { \"product\": \"{{product_id}}\", \"images\": [\"https://images.unsplash.com/photo-1591561954557-26941169b49e\"], \"price\": 2199, \"originalPrice\": null, \"rating\": 4.2, \"numberOfReviews\": 8, \"tags\": [], \"colors\": [{ \"colorCode\": \"#000\", \"images\": [\"https://images.unsplash.com/photo-1591561954557-26941169b49e\"], \"default\": true }] },\n    { \"product\": \"{{product_id}}\", \"images\": [\"https://images.unsplash.com/photo-1584917865442-de89df76afd3\"], \"price\": 1899, \"originalPrice\": null, \"rating\": 4.5, \"numberOfReviews\": 12, \"tags\": [], \"colors\": [{ \"colorCode\": \"#8B4513\", \"images\": [\"https://images.unsplash.com/photo-1584917865442-de89df76afd3\"], \"default\": true }] },\n    { \"product\": \"{{product_id}}\", \"images\": [\"https://images.unsplash.com/photo-1553062407-98eeb64c6a62\"], \"price\": 2399, \"originalPrice\": null, \"rating\": 4.1, \"numberOfReviews\": 6, \"tags\": [\"sale\"], \"colors\": [{ \"colorCode\": \"#DEB887\", \"images\": [\"https://images.unsplash.com/photo-1553062407-98eeb64c6a62\"], \"default\": true }] }\n  ]\n}"
+            },
             "url": "{{base_url}}/admin/landing/elevate-look"
           }
         },
@@ -672,9 +683,10 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"order\": 3,\n  \"is_active\": true,\n  \"products\": []\n}"
+              "raw": "{\n  \"order\": 3,\n  \"is_active\": true,\n  \"products\": [\n    {\n      \"product\": \"{{product_id}}\",\n      \"images\": [\"https://images.unsplash.com/photo-1590874103328-eac38a683ce7\", \"https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d\"],\n      \"price\": 1799,\n      \"originalPrice\": 2199,\n      \"rating\": 4.0,\n      \"numberOfReviews\": 25,\n      \"tags\": [\"trending\"],\n      \"colors\": [\n        { \"colorCode\": \"#374151\", \"images\": [\"https://images.unsplash.com/photo-1590874103328-eac38a683ce7\"], \"default\": true }\n      ]\n    }\n  ]\n}"
             },
-            "url": "{{base_url}}/admin/landing/fresh-styles"
+            "url": "{{base_url}}/admin/landing/fresh-styles",
+            "description": "Create products via Admin - Product Add first. Use each product's _id in products[].product (required). No name field."
           }
         },
         {
@@ -685,7 +697,10 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{admin_token}}" }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"products\": []\n}" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order\": 3,\n  \"is_active\": true,\n  \"products\": [\n    {\n      \"product\": \"{{product_id}}\",\n      \"images\": [\"https://images.unsplash.com/photo-1590874103328-eac38a683ce7\"],\n      \"price\": 1799,\n      \"originalPrice\": 2199,\n      \"rating\": 4.0,\n      \"numberOfReviews\": 25,\n      \"tags\": [\"trending\"],\n      \"colors\": [{ \"colorCode\": \"#374151\", \"images\": [\"https://images.unsplash.com/photo-1590874103328-eac38a683ce7\"], \"default\": true }]\n    }\n  ]\n}"
+            },
             "url": "{{base_url}}/admin/landing/fresh-styles"
           }
         }

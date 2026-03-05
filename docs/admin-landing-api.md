@@ -364,18 +364,20 @@ curl --location --request PUT 'https://api.pursolina.com/api/admin/landing/fresh
 
 ## Product item shape (for products array)
 
-Each item in `products` can have:
+**Flow: Create products first via Admin - Product Add** (with name, slug, description, colorVariants, dimensions, etc. for the product detail page), then use each product’s `_id` in landing section APIs. Do **not** send `name` in landing product items.
+
+Each item in `products` must have:
 
 | Field            | Type     | Required | Notes |
 |-----------------|----------|----------|--------|
-| `product`       | string   | No       | **Must be a valid MongoDB ObjectId:** 24-character hex string (e.g. `69a6a750edd1d00ca9626ddc`). If you send a non-ObjectId (e.g. numeric string), the backend will store `null` for that item so the rest still saves. Get real product IDs from **GET** `/admin/product/list` or your product list API. |
-| `images`        | string[] | No       | Image URLs for this item |
+| `product`       | string   | **Yes**  | 24-character hex MongoDB ObjectId from an existing product. Create via **POST** `/admin/product/add` first; use response `data._id`. |
+| `images`        | string[] | No       | Image URLs for the card (optional override) |
 | `price`         | number   | No       | Display price |
 | `originalPrice`| number   | No       | Strikethrough price |
 | `rating`        | number   | No       | 0–5 |
 | `numberOfReviews` | number | No       | Count |
 | `tags`          | string[] | No       | `bestseller`, `hot`, `trending`, `sale` |
-| `colors`        | array    | No       | `[{ "colorCode": "#hex", "images": ["url1", "url2"], "default": true }]` — `images` is an **array of strings** (multiple images per color); one color can have `"default": true`. |
+| `colors`        | array    | No       | `[{ "colorCode": "#hex", "images": ["url1", "url2"], "default": true }]` — `images` is an **array of strings**; one color can have `"default": true`. |
 
 ---
 
@@ -404,17 +406,18 @@ Use this prompt when building or wiring the landing-page section in the admin pa
 - **Elevate look:** Exactly 4 products. If section exists, on save **PUT** `/admin/landing/elevate-look` with `{ order?, products[] }` (4 items). If not, **POST** `/admin/landing/elevate-look` with same. Product shape same as above.
 - **Fresh styles:** Same as best collections (multiple products). **PUT** or **POST** `/admin/landing/fresh-styles` with `{ order?, is_active?, products[] }`.
 - **Generic section update:** To patch any section by id (e.g. only `order` or `is_active`), use **PUT** `/admin/landing/section/update/:id` with body containing only the fields to update. `id` = section `_id` from GET response.
-- **Product picker:** For each product row, use the **product list API** to get products; use each product’s `_id` (24-character hex, e.g. `69a6a750edd1d00ca9626ddc`) as `product`. Do **not** use numeric or non-ObjectId values — the API will save `product: null` for invalid IDs and the card won’t link to a detail page. Optionally sync `images`, `price`, `originalPrice`, `rating`, `numberOfReviews` from the product, or let admin edit. Tags: one or more of `bestseller`, `hot`, `trending`, `sale`.
-- **Colors per product:** Each product item can have `colors: [{ colorCode, images: ["url1","url2"], default: true }]`. `images` is an **array of strings** (multiple images per color). Set `default: true` on one color per product if needed.
-- **Errors:** Show `response.data.message` or `response.message` on 4xx/5xx. 409 = “Section already exists, use update” (switch form to update and refetch).
+- **Create product first:** For each card, create a product via **POST** `/admin/product/add` with full payload (name, slug, shortDescription, description, category, price, salePrice, image, tags, colorVariants with multiple images and default, dimensions, averageRating, numberOfReviews). Then use the returned `data._id` as `products[].product` in Best Collections / Fresh Styles / Elevate Look. Do **not** send `name` (or any product-creation fields) in landing payloads.
+- **Product required:** Each `products[]` item must include `product` (valid 24-char hex ObjectId of an existing product). Missing or invalid `product` returns **400**.
+- **Colors per product:** Each product item can have `colors: [{ colorCode, images: ["url1","url2"], default: true }]`. `images` is an **array of strings**. Set `default: true` on one color if needed.
+- **Errors:** Show `response.data.message` or `response.message` on 4xx/5xx. 400 = missing/invalid product id or product not found. 409 = “Section already exists, use update”.
 
 ---
 
 ## How add/update APIs work (short prompt)
 
-- **Create (POST):** Use when the section does not exist yet (e.g. first time). **POST** `/admin/landing/hero`, `/admin/landing/best-collections`, `/admin/landing/elevate-look`, or `/admin/landing/fresh-styles` with the body for that section. If the section already exists, the API returns **409** — then use Update instead.
-- **Update (PUT):** Use when the section already exists (you got it from **GET** `/admin/landing`). **PUT** the same path with the full or partial body (e.g. `products`, `order`, `is_active`). Send the full `products` array as you want it saved; the backend normalizes each item (invalid `product` → null, `colors[].images` as array, `colors[].default` as boolean).
-- **Product ID:** For each entry in `products[]`, `product` must be a **24-character hex MongoDB ObjectId** (e.g. from your product list). Any other value is stored as `null` so the request still succeeds but that card won’t link to a product detail page.
-- **Payload shape:** Same for create and update. Example for best_collections / fresh_styles: `{ "order": 1, "is_active": true, "products": [ { "product": "<24-char-hex-id>", "images": ["url"], "price": 21, "originalPrice": 12, "rating": 4, "numberOfReviews": 0, "tags": ["trending"], "colors": [ { "colorCode": "#374151", "images": ["url1","url2"], "default": true } ] } ] }`.
+- **Create (POST):** Use when the section does not exist. **POST** `/admin/landing/hero`, `/admin/landing/best-collections`, `/admin/landing/elevate-look`, or `/admin/landing/fresh-styles`. If section already exists, API returns **409** — use Update instead.
+- **Update (PUT):** Use when section exists (from **GET** `/admin/landing`). **PUT** same path with full or partial body. Send full `products` array; each item must have valid `product` id.
+- **Product ID:** For each `products[]` item, `product` is **required** and must be a **24-character hex ObjectId** of an existing product. Create products via **Admin - Product Add** first; do not send `name` in landing payloads.
+- **Payload shape:** Example for best_collections / fresh_styles: `{ "order": 1, "is_active": true, "products": [ { "product": "<24-char-product-id>", "images": ["url"], "price": 3162, "originalPrice": 3661, "rating": 4.1, "numberOfReviews": 64, "tags": ["bestseller"], "colors": [ { "colorCode": "#374151", "images": ["url1"], "default": true } ] } ] }`.
 
 ---

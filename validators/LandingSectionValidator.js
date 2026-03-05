@@ -47,7 +47,9 @@ const ColorItemSchema = Joi.object({
 });
 
 const LandingProductItemSchema = Joi.object({
-  product: Joi.string().optional(),
+  product: Joi.string().required().messages({
+    "any.required": "Product id is required for each item. Create product via Admin - Product Add first.",
+  }),
   images: Joi.array().items(Joi.string()).optional(),
   price: Joi.number().allow(null).optional(),
   originalPrice: Joi.number().allow(null).optional(),
