@@ -42,7 +42,8 @@ export const HeroSectionValidate = Joi.object({
 
 const ColorItemSchema = Joi.object({
   colorCode: Joi.string().allow("").optional(),
-  images: Joi.string().allow(null).optional(),
+  images: Joi.array().items(Joi.string()).optional(),
+  default: Joi.boolean().optional(),
 });
 
 const LandingProductItemSchema = Joi.object({

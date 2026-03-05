@@ -24,7 +24,8 @@ const LandingSectionSchema = new mongoose.Schema(
     colors: [
       {
         colorCode: { type: String, default: "" },
-        images: { type: String, default: null },
+        images: [{ type: String }],
+        default: { type: Boolean, default: false },
       },
     ],
     // For best_collections (multiple), elevate_look (4), fresh_styles (multiple): array of product items
@@ -40,7 +41,8 @@ const LandingSectionSchema = new mongoose.Schema(
         colors: [
           {
             colorCode: { type: String, default: "" },
-            images: { type: String, default: null },
+            images: [{ type: String }],
+            default: { type: Boolean, default: false },
           },
         ],
       },
