@@ -3,8 +3,8 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 dotenv.config();
 
-const keyId = "rzp_test_SKeVaEG3gFZqga";
-const keySecret = "NhR4O5rrHovOSLO4Qp2QekY2";
+const keyId = "rzp_test_SQGzEYgzExqUwV";
+const keySecret = "Ac327BU0PCfMcOzg1akvcvBR";
 
 let instance = null;
 
