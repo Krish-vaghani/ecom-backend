@@ -30,7 +30,7 @@ export async function sendOtpSms(to, otp) {
   if (!fromNumber) {
     throw new Error("TWILIO_PHONE must be set in .env");
   }
-  const messageBody = `<#> ${otp} is your car hangout OTP\n${appSignature}`;
+  const messageBody = `<#> ${otp} is your Pursolina OTP\n${appSignature}`;
   const twilioClient = getTwilioClient();
   const message = await twilioClient.messages.create({
     body: messageBody,
