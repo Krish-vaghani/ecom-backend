@@ -35,7 +35,7 @@ export const AddToWishlist = async (req, res) => {
     if (alreadyIn) {
       const list = await User.findById(userId)
         .select("wishlist")
-        .populate("wishlist", "name slug image price salePrice is_active")
+        .populate("wishlist")
         .lean();
       return res.status(200).json({
         message: "Product already in wishlist.",
@@ -48,7 +48,7 @@ export const AddToWishlist = async (req, res) => {
 
     const updated = await User.findById(userId)
       .select("wishlist")
-      .populate("wishlist", "name slug image price salePrice is_active")
+      .populate("wishlist")
       .lean();
 
     return res.status(200).json({
@@ -88,7 +88,7 @@ export const RemoveFromWishlist = async (req, res) => {
 
     const updated = await User.findById(userId)
       .select("wishlist")
-      .populate("wishlist", "name slug image price salePrice is_active")
+      .populate("wishlist")
       .lean();
 
     return res.status(200).json({
@@ -109,7 +109,7 @@ export const ListWishlist = async (req, res) => {
   try {
     const user = await User.findById(userId)
       .select("wishlist")
-      .populate("wishlist", "name slug image price salePrice is_active")
+      .populate("wishlist")
       .lean();
 
     if (!user) {

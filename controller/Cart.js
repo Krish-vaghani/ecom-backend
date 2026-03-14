@@ -45,7 +45,7 @@ export const AddToCart = async (req, res) => {
 
     const updated = await User.findById(userId)
       .select("cartItems")
-      .populate("cartItems.product", "name slug image price salePrice is_active")
+      .populate("cartItems.product")
       .lean();
 
     return res.status(200).json({
@@ -93,7 +93,7 @@ export const UpdateCartItem = async (req, res) => {
 
     const updated = await User.findById(userId)
       .select("cartItems")
-      .populate("cartItems.product", "name slug image price salePrice is_active")
+      .populate("cartItems.product")
       .lean();
 
     return res.status(200).json({
@@ -133,7 +133,7 @@ export const RemoveFromCart = async (req, res) => {
 
     const updated = await User.findById(userId)
       .select("cartItems")
-      .populate("cartItems.product", "name slug image price salePrice is_active")
+      .populate("cartItems.product")
       .lean();
 
     return res.status(200).json({
@@ -154,7 +154,7 @@ export const GetCart = async (req, res) => {
   try {
     const user = await User.findById(userId)
       .select("cartItems")
-      .populate("cartItems.product", "name slug image price salePrice is_active")
+      .populate("cartItems.product")
       .lean();
 
     if (!user) {
