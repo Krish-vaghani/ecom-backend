@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { sendOrderConfirmSms, sendOrderStatusSms } from "./twilio.js";
 
 const FROM_EMAIL = "krishvaghani3800@gmail.com";
 const TO_EMAIL = "krishvaghani07@gmail.com";
@@ -50,6 +51,45 @@ export function sendOrderConfirmEmail(order) {
       });
     } catch (err) {
       console.error("[OrderConfirmEmail] Failed to send (background):", err.message);
+    }
+  });
+}
+
+/**
+ * Send order confirmation SMS to the customer (deliverTo.phone).
+ * Runs in background; never throws. Logs errors only.
+ */
+function sendOrderConfirmSmsToUser(order) {
+  setImmediate(async () => {
+    const phone = order.deliverTo?.phone;
+    if (!phone) return;
+    const result = await sendOrderConfirmSms(phone, order.orderId || order._id, order.total ?? 0);
+    if (!result) {
+      console.warn("[OrderConfirmSms] Failed to send (background); check Twilio config.");
+    }
+  });
+}
+
+/**
+ * Send both order confirmation email and SMS in the background. Never throws.
+ * Call this when payment is confirmed (Razorpay verify or admin confirm).
+ */
+export function sendOrderConfirmNotifications(order) {
+  sendOrderConfirmEmail(order);
+  sendOrderConfirmSmsToUser(order);
+}
+
+/**
+ * Send order status update SMS to the customer (deliverTo.phone). Runs in background; never throws.
+ * Call this when admin updates order status (shipped, out_for_delivery, delivered, or any status).
+ */
+export function sendOrderStatusSmsToUser(order, status) {
+  setImmediate(async () => {
+    const phone = order.deliverTo?.phone;
+    if (!phone) return;
+    const result = await sendOrderStatusSms(phone, order.orderId || order._id, status);
+    if (!result) {
+      console.warn("[OrderStatusSms] Failed to send (background); check Twilio config.");
     }
   });
 }

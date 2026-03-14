@@ -14,7 +14,7 @@ import {
   verifyPaymentSignature,
 } from "../connection/razorpay.js";
 import { getShippingChargeForItems } from "../helper/shippingRates.js";
-import { sendOrderConfirmEmail } from "../connection/email.js";
+import { sendOrderConfirmNotifications, sendOrderStatusSmsToUser } from "../connection/email.js";
 
 const getUserId = (req) => req.user?.id || req.user?._id;
 
@@ -298,7 +298,7 @@ export const VerifyRazorpayPayment = async (req, res) => {
       .populate("items.product", "name image slug")
       .lean();
 
-    sendOrderConfirmEmail(updated);
+    sendOrderConfirmNotifications(updated);
 
     return res.status(200).json({
       message: "Payment verified successfully.",
@@ -427,7 +427,9 @@ export const AdminUpdateOrderStatus = async (req, res) => {
       .lean();
 
     if (status === "confirmed") {
-      sendOrderConfirmEmail(updated);
+      sendOrderConfirmNotifications(updated);
+    } else {
+      sendOrderStatusSmsToUser(updated, status);
     }
 
     return res.status(200).json({ message: "Order status updated.", data: updated });
