@@ -6,7 +6,7 @@ dotenv.config();
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const fromNumber = process.env.TWILIO_PHONE;
-const appSignature = process.env.TWILIO_APP_SIGNATURE || "";
+const appSignature = process.env.TWILIO_APP_SIGNATURE || "pursolina";
 
 let client = null;
 
@@ -63,7 +63,7 @@ export async function sendOrderConfirmSms(toPhone, orderId, total) {
     }
     const to = toE164(toPhone);
     const totalStr = Number(total).toFixed(2);
-    const body = `Your order ${orderId} has been confirmed. Total: Rs. ${totalStr}. Thank you!`;
+    const body = `Your order ${orderId} has been confirmed. Thanks for your purchase! your order will be delivered within 5-7 days. Pursolina`;
     const twilioClient = getTwilioClient();
     const message = await twilioClient.messages.create({
       body: body,
@@ -102,7 +102,6 @@ export async function sendOrderStatusSms(toPhone, orderId, status) {
       console.warn("[OrderStatusSms] Unknown status:", status);
       return null;
     }
-    console.log(toPhone,"fdjshksdjbnfjsdbfn  =========");
     const to = toE164(String(toPhone));
     const body = msg.replace("%s", String(orderId));
     const twilioClient = getTwilioClient();
