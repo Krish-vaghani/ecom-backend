@@ -89,11 +89,17 @@ const ORDER_STATUS_MESSAGES = {
  */
 export async function sendOrderStatusSms(toPhone, orderId, status) {
   try {
-    if (!fromNumber || !accountSid || !authToken) return null;
+    if (!fromNumber || !accountSid || !authToken) {
+      console.warn("[OrderStatusSms] Twilio not configured (fromNumber/accountSid/authToken).");
+      return null;
+    }
     const msg = ORDER_STATUS_MESSAGES[status];
-    if (!msg) return null;
-    const to = toE164(toPhone);
-    const body = msg.replace("%s", orderId);
+    if (!msg) {
+      console.warn("[OrderStatusSms] Unknown status:", status);
+      return null;
+    }
+    const to = toE164(String(toPhone));
+    const body = msg.replace("%s", String(orderId));
     const twilioClient = getTwilioClient();
     const message = await twilioClient.messages.create({
       body,
@@ -101,7 +107,8 @@ export async function sendOrderStatusSms(toPhone, orderId, status) {
       to,
     });
     return { sid: message.sid };
-  } catch (_) {
+  } catch (err) {
+    console.error("[OrderStatusSms] Twilio error:", err.message);
     return null;
   }
 }

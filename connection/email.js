@@ -85,11 +85,19 @@ export function sendOrderConfirmNotifications(order) {
  */
 export function sendOrderStatusSmsToUser(order, status) {
   setImmediate(async () => {
-    const phone = order.deliverTo?.phone;
-    if (!phone) return;
-    const result = await sendOrderStatusSms(phone, order.orderId || order._id, status);
-    if (!result) {
-      console.warn("[OrderStatusSms] Failed to send (background); check Twilio config.");
+    try {
+      const phone = order.deliverTo?.phone;
+      if (!phone) {
+        console.warn("[OrderStatusSms] No deliverTo.phone on order", order.orderId || order._id);
+        return;
+      }
+      const orderId = order.orderId || (order._id && String(order._id)) || "";
+      const result = await sendOrderStatusSms(phone, orderId, status);
+      if (!result) {
+        console.warn("[OrderStatusSms] Send failed for order", orderId, "status", status);
+      }
+    } catch (err) {
+      console.error("[OrderStatusSms] Background error:", err.message);
     }
   });
 }

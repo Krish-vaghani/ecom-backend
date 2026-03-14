@@ -14,7 +14,11 @@ import {
   verifyPaymentSignature,
 } from "../connection/razorpay.js";
 import { getShippingChargeForItems } from "../helper/shippingRates.js";
-import { sendOrderConfirmNotifications, sendOrderStatusSmsToUser } from "../connection/email.js";
+import {
+  sendOrderConfirmEmail,
+  sendOrderConfirmNotifications,
+  sendOrderStatusSmsToUser,
+} from "../connection/email.js";
 
 const getUserId = (req) => req.user?.id || req.user?._id;
 
@@ -85,7 +89,7 @@ export const PlaceOrder = async (req, res) => {
       });
     }
 
-    const shippingCharge = await getShippingChargeForItems(items, address.pincode, true);
+    const shippingCharge = await getShippingChargeForItems(items, address.pincode, true, subtotal);
     const total = subtotal + shippingCharge;
     const estimatedDeliveryDate = addDays(new Date(), ESTIMATED_DAYS_DELIVERY);
 
@@ -186,7 +190,7 @@ export const CreateRazorpayOrder = async (req, res) => {
     });
   }
 
-  const shippingCharge = await getShippingChargeForItems(items, address.pincode, false);
+  const shippingCharge = await getShippingChargeForItems(items, address.pincode, false, subtotal);
   const total = subtotal + shippingCharge;
 
   const deliverTo = {
