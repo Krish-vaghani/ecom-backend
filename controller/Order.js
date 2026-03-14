@@ -299,6 +299,7 @@ export const VerifyRazorpayPayment = async (req, res) => {
     await order.save();
 
     const updated = await Order.findById(order._id)
+      .populate("user", "phone")
       .populate("items.product", "name image slug")
       .lean();
 

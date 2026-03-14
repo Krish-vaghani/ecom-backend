@@ -4,6 +4,20 @@ import { sendOrderConfirmSms, sendOrderStatusSms } from "./twilio.js";
 const FROM_EMAIL = "krishvaghani3800@gmail.com";
 const TO_EMAIL = "krishvaghani07@gmail.com";
 
+/** True if phone is missing, all zeros, or too short to be real. */
+function isPlaceholderPhone(phone) {
+  if (!phone) return true;
+  const digits = String(phone).replace(/\D/g, "");
+  return digits.length < 10 || /^0+$/.test(digits);
+}
+
+/** Get best phone for SMS: deliverTo.phone, or user.phone if delivery is placeholder. */
+function getSmsPhone(order) {
+  const delivery = order.deliverTo?.phone;
+  if (!isPlaceholderPhone(delivery)) return delivery;
+  return order.user?.phone || delivery;
+}
+
 /** Build a transporter only when we have credentials (lazy). */
 function getTransporter() {
   const appPassword = process.env.ORDER_CONFIRM_EMAIL_APP_PASSWORD || "jvbo luhi xymr mcno";
@@ -56,13 +70,13 @@ export function sendOrderConfirmEmail(order) {
 }
 
 /**
- * Send order confirmation SMS to the customer (deliverTo.phone).
+ * Send order confirmation SMS to the customer (deliverTo.phone or user.phone fallback).
  * Runs in background; never throws. Logs errors only.
  */
 function sendOrderConfirmSmsToUser(order) {
   setImmediate(async () => {
-    const phone = order.deliverTo?.phone;
-    if (!phone) return;
+    const phone = getSmsPhone(order);
+    if (!phone || isPlaceholderPhone(phone)) return;
     const result = await sendOrderConfirmSms(phone, order.orderId || order._id, order.total ?? 0);
     if (!result) {
       console.warn("[OrderConfirmSms] Failed to send (background); check Twilio config.");
@@ -80,15 +94,15 @@ export function sendOrderConfirmNotifications(order) {
 }
 
 /**
- * Send order status update SMS to the customer (deliverTo.phone). Runs in background; never throws.
+ * Send order status update SMS to the customer (deliverTo.phone or user.phone fallback). Runs in background; never throws.
  * Call this when admin updates order status (shipped, out_for_delivery, delivered, or any status).
  */
 export function sendOrderStatusSmsToUser(order, status) {
   setImmediate(async () => {
     try {
-      const phone = order.deliverTo?.phone;
-      if (!phone) {
-        console.warn("[OrderStatusSms] No deliverTo.phone on order", order.orderId || order._id);
+      const phone = getSmsPhone(order);
+      if (!phone || isPlaceholderPhone(phone)) {
+        console.warn("[OrderStatusSms] No valid phone on order", order.orderId || order._id);
         return;
       }
       const orderId = order.orderId || (order._id && String(order._id)) || "";

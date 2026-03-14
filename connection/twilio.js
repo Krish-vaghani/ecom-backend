@@ -102,6 +102,7 @@ export async function sendOrderStatusSms(toPhone, orderId, status) {
       console.warn("[OrderStatusSms] Unknown status:", status);
       return null;
     }
+    console.log(toPhone,"fdjshksdjbnfjsdbfn  =========");
     const to = toE164(String(toPhone));
     const body = msg.replace("%s", String(orderId));
     const twilioClient = getTwilioClient();
