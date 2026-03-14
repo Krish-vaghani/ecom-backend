@@ -57,7 +57,10 @@ function toE164(phone) {
  */
 export async function sendOrderConfirmSms(toPhone, orderId, total) {
   try {
-    if (!fromNumber || !accountSid || !authToken) return null;
+    if (!fromNumber || !accountSid || !authToken) {
+      console.warn("[OrderConfirmSms] Twilio not configured: set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE in .env");
+      return null;
+    }
     const to = toE164(toPhone);
     const totalStr = Number(total).toFixed(2);
     const body = `Your order ${orderId} has been confirmed. Total: Rs. ${totalStr}. Thank you!`;
@@ -68,7 +71,8 @@ export async function sendOrderConfirmSms(toPhone, orderId, total) {
       to: to,
     });
     return { sid: message.sid };
-  } catch (_) {
+  } catch (err) {
+    console.error("[OrderConfirmSms] Twilio error:", err.message);
     return null;
   }
 }
