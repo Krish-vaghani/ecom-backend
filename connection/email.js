@@ -11,11 +11,21 @@ function isPlaceholderPhone(phone) {
   return digits.length < 10 || /^0+$/.test(digits);
 }
 
-/** Get best phone for SMS: deliverTo.phone, or user.phone if delivery is placeholder. */
+/** If phone has 10 or fewer digits, prefix with +91 (India). */
+function ensureE164Indian(phone) {
+  if (!phone) return phone;
+  const digits = String(phone).replace(/\D/g, "");
+  if (digits.length === 0) return phone;
+  if (digits.length <= 10) return "+91" + digits;
+  if (digits.length === 12 && digits.startsWith("91")) return "+" + digits;
+  return phone.startsWith("+") ? phone : "+" + digits;
+}
+
+/** Get best phone for SMS: deliverTo.phone, or user.phone if delivery is placeholder. Returns E.164 (e.g. +91 for 10-digit). */
 function getSmsPhone(order) {
   const delivery = order.deliverTo?.phone;
-  if (!isPlaceholderPhone(delivery)) return delivery;
-  return order.user?.phone || delivery;
+  const raw = !isPlaceholderPhone(delivery) ? delivery : order.user?.phone || delivery;
+  return raw ? ensureE164Indian(raw) : raw;
 }
 
 /** Build a transporter only when we have credentials (lazy). */
